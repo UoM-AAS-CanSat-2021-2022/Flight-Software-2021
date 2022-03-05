@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/c++,platformio
-# Edit at https://www.toptal.com/developers/gitignore?templates=c++,platformio
+# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,vim,c++,platformio
+# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,vim,c++,platformio
 
 ### C++ ###
 # Prerequisites
@@ -42,7 +42,53 @@
 .gcc-flags.json
 .pio
 
-# End of https://www.toptal.com/developers/gitignore/api/c++,platformio
+### Vim ###
+# Swap
+[._]*.s[a-v][a-z]
+!*.svg  # comment out if you don't need vector files
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+Sessionx.vim
+
+# Temporary
+.netrwhist
+*~
+# Auto-generated tag files
+tags
+# Persistent undo
+[._]*.un~
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+### VisualStudioCode Patch ###
+# Ignore all local history of files
+.history
+.ionide
+
+# Support for Project snippet scope
+
+# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,vim,c++,platformio
 
 # don't commit compiled tests
 test
+
+# don't need my vim session files
+Session.vim
+
