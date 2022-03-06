@@ -1,10 +1,13 @@
 #include <iostream>
+#include <iomanip>
 #include <variant>
 
 #include "command.hpp"
 
 struct CommandVisitor {
 	void operator()(std::monostate& _) {
+		// Stops the compiler warning
+		_ = _;
 		std::cout << "Error parsing command." << std::endl;
 	}
 
@@ -35,6 +38,7 @@ int main() {
 
 	std::cout << std::boolalpha;
 	for (const auto & a : inps) {
+		std::cout << "Parsing " << std::quoted(a) << '\t';
 		auto val = Command::parse(a);
 		std::visit(CommandVisitor {}, val);
 	}
