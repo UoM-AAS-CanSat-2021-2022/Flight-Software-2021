@@ -3,7 +3,6 @@
 #include <chrono>
 #include <cstdint>
 #include <ostream>
-#include "fake_clock.hpp"
 
 namespace chrono = std::chrono;
 

@@ -1,35 +1,53 @@
 #include <Arduino.h>
+#include <iostream>
+
+#include "command.hpp"
 
 const int led = LED_BUILTIN;
+bool led_on = false;
+
+struct CommandVisitor {
+	void operator()(std::monostate& _) {
+		// Stops the compiler warning
+		_ = _;
+		//std::cout << "Error parsing command." << std::endl;
+		Serial.println("Error parsing command.");
+	}
+
+	void operator()(Command::OnOff& on_off) {
+		// std::cout << "Got ON_OFF value: " << on_off << std::endl;
+		Serial.println("Got ON_OFF value.");
+		led_on = on_off;
+	}
+
+	void operator()(Command::UtcTime& utc_time) {
+		//std::cout << "Got UTC_TIME value: " << utc_time << std::endl;
+		Serial.println("Got UTC_TIME value.");
+	}
+
+	void operator()(Command::Mode& mode) {
+		//std::cout << "Got MODE value: " << mode << std::endl;
+		Serial.println("Got MODE value.");
+	}
+
+	void operator()(Command::Pressure& pressure) {
+		//std::cout << "Got PRESSURE value: " << pressure << std::endl;
+		Serial.println("Got PRESSURE value.");
+	}
+};
 
 void setup() {
 	pinMode(led, OUTPUT);
 	Serial.begin(9600);
 }
 
-struct ret_type {
-	bool a;
-	unsigned int b;
-};
-
-ret_type get_val() {
-	static unsigned int x = 42;
-
-	x ^= x << 17;
-	x ^= x >> 13;
-	x ^= x << 5;
-
-	return {(x & 1) == 0, x};
-}
-
 void loop() {
-	auto [x, y] = get_val();
+	static auto cmd_processor = Command::Processor(Serial);
 
-	Serial.print("x: ");
-	Serial.print(x);
-	Serial.print(", y: ");
-	Serial.println(y, HEX);
-
-	delay(1000);
-	digitalWrite(led, x ? HIGH : LOW);
+	delay(100);
+	auto cmd = cmd_processor.next_command();
+	if (cmd) {
+		std::visit(CommandVisitor {}, *cmd);
+	}
+	digitalWrite(led, led_on ? HIGH : LOW);
 }

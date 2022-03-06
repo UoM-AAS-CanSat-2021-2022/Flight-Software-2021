@@ -40,4 +40,14 @@ namespace Command {
 
 	using Value = std::variant<std::monostate, OnOff, UtcTime, Mode, Pressure>;
 	Value parse(std::string);
+
+	template <typename Stream>
+	class Processor {
+		std::string buf;
+		Stream stream;
+
+	public:
+		Processor(Stream);
+		std::optional<Value> next_command();
+	};
 }

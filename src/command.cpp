@@ -138,4 +138,27 @@ namespace Command {
 		// this line is unreachable so just return std::monotype
 		return {};
 	}
+
+	template <typename Stream>
+	Processor<Stream>::Processor(Stream stream) : stream(stream) {}
+
+	template <typename Stream>
+	std::optional<Value> Processor<Stream>::next_command() {
+		int i;
+		while ((i = stream.next()) > 0) {
+			char c = static_cast<char>(i);
+
+			if (c == '\n') {
+				// if we hit a newline try and parse the command
+				auto cmd = parse(buf);
+				buf.clear();
+				return cmd;
+			} else {
+				// otherwise just append to the buffer
+				buf.push_back(c);
+			}
+		}
+
+		return {};
+	}
 }
