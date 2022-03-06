@@ -26,4 +26,3 @@ namespace Command {
 	using Value = std::variant<std::monostate, OnOff, UtcTime, Mode, Pressure>;
 	Value parse(std::string);
 }
-

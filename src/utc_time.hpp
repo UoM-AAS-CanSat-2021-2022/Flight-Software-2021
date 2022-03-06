@@ -22,7 +22,10 @@ public:
 
 	typename Clock::duration time_since();
 
-	template <typename T>
-	friend std::ostream& operator<<(std::ostream&, const UtcTimePoint<T>&);
+	// NOTE: this is implemented here because templates are funky
+	// https://stackoverflow.com/questions/10632251/undefined-reference-to-template-function
+	friend std::ostream& operator<<(std::ostream& os, const UtcTimePoint<Clock>& utc_time) {
+		os << utc_time.h << ':' << utc_time.m << ':' << utc_time.s;
+		return os;
+	}
 };
-

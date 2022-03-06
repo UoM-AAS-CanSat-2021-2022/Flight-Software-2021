@@ -1,9 +1,10 @@
 #include <iostream>
 #include <variant>
+
 #include "command.hpp"
 
 struct CommandVisitor {
-	void operator()(std::monostate&& _) {
+	void operator()(std::monostate& _) {
 		std::cout << "Error parsing command." << std::endl;
 	}
 
@@ -16,7 +17,7 @@ struct CommandVisitor {
 	}
 
 	void operator()(Command::Mode& mode) {
-		std::cout << "Got MODE value: "; //<< mode << std::endl;
+		std::cout << "Got MODE value: " << mode << std::endl;
 	}
 
 	void operator()(Command::Pressure& pressure) {
@@ -32,6 +33,7 @@ int main() {
 		"CMD,1057,SIMP,111364",
 	};
 
+	std::cout << std::boolalpha;
 	for (const auto & a : inps) {
 		auto val = Command::parse(a);
 		std::visit(CommandVisitor {}, val);
@@ -39,4 +41,3 @@ int main() {
 
 	return 0;
 }
-

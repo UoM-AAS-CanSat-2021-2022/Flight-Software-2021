@@ -52,8 +52,8 @@ namespace Command {
 	 *   - <PRESSURE>
 	 *     - An integer holding the simulated atmospheric pressure in Pascals.
 	 */
-	Command::Value parse(std::string input) {
-		return false;
+	Value parse(std::string input) {
+		return Mode::Enable;
 	}
 }
 

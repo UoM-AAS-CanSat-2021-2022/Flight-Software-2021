@@ -11,9 +11,3 @@ template <typename Clock>
 typename Clock::duration UtcTimePoint<Clock>::time_since() {
 	return clock.now() - clock_value;
 }
-
-template <typename Clock>
-std::ostream& operator<<(std::ostream& os, const UtcTimePoint<Clock>& utc_time) {
-	os << utc_time.h << ':' << utc_time.m << ':' << utc_time.s;
-	return os;
-}
