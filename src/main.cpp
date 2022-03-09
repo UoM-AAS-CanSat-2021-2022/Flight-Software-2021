@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <cstdint>
 #include <iostream>
 
 #include "command.hpp"
@@ -44,10 +45,11 @@ void setup() {
 void loop() {
 	static auto cmd_processor = Command::Processor(Serial);
 
-	delay(100);
+	delay(300);
 	auto cmd = cmd_processor.next_command();
 	if (cmd) {
 		std::visit(CommandVisitor {}, *cmd);
 	}
+
 	digitalWrite(led, led_on ? HIGH : LOW);
 }

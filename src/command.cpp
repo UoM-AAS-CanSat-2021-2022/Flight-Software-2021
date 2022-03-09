@@ -85,7 +85,7 @@ namespace Command {
 	 *   - <PRESSURE>
 	 *     - An integer holding the simulated atmospheric pressure in Pascals.
 	 */
-	Value parse(std::string input) {
+	Value parse(std::string const input) {
 		std::istringstream in { input };
 		std::string buf;
 
@@ -145,7 +145,7 @@ namespace Command {
 	template <typename Stream>
 	std::optional<Value> Processor<Stream>::next_command() {
 		int i;
-		while ((i = stream.next()) > 0) {
+		while ((i = stream.read()) > 0) {
 			char c = static_cast<char>(i);
 
 			if (c == '\n') {

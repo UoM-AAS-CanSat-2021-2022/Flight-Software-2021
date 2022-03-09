@@ -1,10 +1,7 @@
 #pragma once
 
-#include <chrono>
 #include <cstdint>
 #include <ostream>
-
-namespace chrono = std::chrono;
 
 template <typename Clock>
 class UtcTimePoint {
