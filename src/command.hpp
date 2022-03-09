@@ -1,13 +1,15 @@
 #pragma once
 
 #include <cstdint>
+#include <iomanip>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
+#include <Arduino.h>
 
-#include "utc_time.hpp"
 #include "fake_clock.hpp"
+#include "utc_time.hpp"
 
 namespace Command {
 	enum class Format {
@@ -39,7 +41,7 @@ namespace Command {
 	using Pressure = std::uint32_t;
 
 	using Value = std::variant<std::monostate, OnOff, UtcTime, Mode, Pressure>;
-	Value parse(std::string);
+	Value parse(const std::string);
 
 	template <typename Stream>
 	class Processor {
@@ -47,7 +49,28 @@ namespace Command {
 		Stream stream;
 
 	public:
-		Processor(Stream);
-		std::optional<Value> next_command();
+		Processor(Stream stream) : stream(stream) {}
+		std::optional<Value> next_command() {
+			while (stream.available()) {
+				char c = static_cast<char>(stream.read());
+
+				// ignore the carriage return character
+				if (c == '\r') {
+					continue;
+				}
+
+				if (c == '\n') {
+					// if we hit a newline try and parse the command
+					auto cmd = parse(buf);
+					buf.clear();
+					return cmd;
+				} else {
+					// otherwise just append to the buffer
+					buf.push_back(c);
+				}
+			}
+
+			return {};
+		}
 	};
 }
