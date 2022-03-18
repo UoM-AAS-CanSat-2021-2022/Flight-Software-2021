@@ -6,7 +6,6 @@
 #include <string>
 #include <string_view>
 #include <variant>
-#include <Arduino.h>
 
 #include "fake_clock.hpp"
 #include "utc_time.hpp"

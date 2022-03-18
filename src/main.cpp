@@ -8,9 +8,7 @@ const int led = LED_BUILTIN;
 bool led_on = false;
 
 struct CommandVisitor {
-	void operator()(std::monostate& _) {
-		// Stops the compiler warning
-		_ = _;
+	void operator()([[maybe_unused]] std::monostate& _) {
 		sout << "Error parsing command." << std::endl;
 	}
 

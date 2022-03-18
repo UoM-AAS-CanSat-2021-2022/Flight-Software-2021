@@ -5,9 +5,7 @@
 #include "command.hpp"
 
 struct CommandVisitor {
-	void operator()(std::monostate& _) {
-		// Stops the compiler warning
-		_ = _;
+	void operator()([[maybe_unused]] std::monostate& _) {
 		std::cout << "Error parsing command." << std::endl;
 	}
 
