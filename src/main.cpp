@@ -8,7 +8,7 @@ const int led = LED_BUILTIN;
 bool led_on = false;
 
 struct CommandVisitor {
-	void operator()([[maybe_unused]] std::monostate& _) {
+	void operator()(std::monostate&) {
 		sout << "Error parsing command." << std::endl;
 	}
 

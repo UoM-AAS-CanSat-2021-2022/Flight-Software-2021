@@ -5,7 +5,7 @@
 #include "command.hpp"
 
 struct CommandVisitor {
-	void operator()([[maybe_unused]] std::monostate& _) {
+	void operator()(std::monostate&) {
 		std::cout << "Error parsing command." << std::endl;
 	}
 
