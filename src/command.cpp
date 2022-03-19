@@ -19,7 +19,7 @@ namespace Command {
 		return os;
 	}
 
-	std::optional<Format> parse_fmt(std::string_view const s) {
+	std::optional<Format> parse_fmt(const std::string_view s) {
 		if      (s == "CX")   return Format::CX;
 		else if (s == "ST")   return Format::ST;
 		else if (s == "SIM")  return Format::SIM;
@@ -27,7 +27,7 @@ namespace Command {
 		else return {};
 	}
 
-	std::optional<UtcTime> parse_st(std::string const input) {
+	std::optional<UtcTime> parse_st(const std::string& input) {
 		std::istringstream in { input };
 		std::string buf;
 		std::uint8_t h, m, s;
@@ -80,7 +80,7 @@ namespace Command {
 	 *   - <PRESSURE>
 	 *     - An integer holding the simulated atmospheric pressure in Pascals.
 	 */
-	Value parse(const std::string input) {
+	Value parse(const std::string& input) {
 		std::istringstream in { input };
 		std::string buf;
 

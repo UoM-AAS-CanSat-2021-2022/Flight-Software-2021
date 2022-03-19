@@ -40,23 +40,21 @@ namespace Command {
 	using Pressure = std::uint32_t;
 
 	using Value = std::variant<std::monostate, OnOff, UtcTime, Mode, Pressure>;
-	Value parse(const std::string);
+	Value parse(const std::string&);
 
 	template <typename Stream>
 	class Processor {
 		std::string buf;
-		Stream stream;
+		Stream& stream;
 
 	public:
-		Processor(Stream stream) : stream(stream) {}
+		Processor(Stream& stream) : stream(stream) {}
 		std::optional<Value> next_command() {
 			while (stream.available()) {
 				char c = static_cast<char>(stream.read());
 
 				// ignore the carriage return character
-				if (c == '\r') {
-					continue;
-				}
+				if (c == '\r') continue;
 
 				if (c == '\n') {
 					// if we hit a newline try and parse the command
