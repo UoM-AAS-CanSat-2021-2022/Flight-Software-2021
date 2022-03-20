@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "util/sout.hpp"
 
 const int led = LED_BUILTIN;
 
@@ -25,12 +26,11 @@ ret_type get_val() {
 void loop() {
 	auto [x, y] = get_val();
 
-	Serial.print("x: ");
-	Serial.print(x);
-	Serial.print(", y: ");
-	Serial.println(y, HEX);
+	sout << "x: " << x
+	     << ", y: " << std::hex << y
+	     << std::dec
+		 << std::endl;
 
-	delay(1000);
+	delay(300);
 	digitalWrite(led, x ? HIGH : LOW);
 }
-
