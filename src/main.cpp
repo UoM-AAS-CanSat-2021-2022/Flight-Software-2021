@@ -1,36 +1,22 @@
 #include <Arduino.h>
+#include <SoftwareSerial.h>
+#include <XBee.h>
 #include "util/sout.hpp"
 
-const int led = LED_BUILTIN;
+constexpr static int led = LED_BUILTIN;
+SoftwareSerial XBeeSerial { PIN_SERIAL_RX, PIN_SERIAL_TX };
+XBee xbee {};
 
 void setup() {
 	pinMode(led, OUTPUT);
 	Serial.begin(9600);
-}
-
-struct ret_type {
-	bool a;
-	unsigned int b;
-};
-
-ret_type get_val() {
-	static unsigned int x = 42;
-
-	x ^= x << 17;
-	x ^= x >> 13;
-	x ^= x << 5;
-
-	return {(x & 1) == 0, x};
+	XBeeSerial.begin(9600);
+	xbee.setSerial(XBeeSerial);
 }
 
 void loop() {
-	auto [x, y] = get_val();
-
-	sout << "x: " << x
-	     << ", y: " << std::hex << y
-	     << std::dec
-		 << std::endl;
-
-	delay(300);
-	digitalWrite(led, x ? HIGH : LOW);
+	static std::uint8_t payload[] { "beans" };
+	static Tx16Request tx { 1057, payload, sizeof(payload) };
+	xbee.send(tx);
+	delay(1000);
 }
