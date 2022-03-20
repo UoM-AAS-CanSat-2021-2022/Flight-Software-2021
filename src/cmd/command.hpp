@@ -7,8 +7,8 @@
 #include <string_view>
 #include <variant>
 
-#include "fake_clock.hpp"
-#include "utc_time.hpp"
+#include "time/fake_clock.hpp"
+#include "time/utc_time.hpp"
 
 namespace Command {
 	enum class Format {

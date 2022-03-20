@@ -1,5 +1,5 @@
 #include <cstdint>
-#include "xorshift.hpp"
+#include "rng/xorshift.hpp"
 
 XorShift32::XorShift32() : state(42) {}
 

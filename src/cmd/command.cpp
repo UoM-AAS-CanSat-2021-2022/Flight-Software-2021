@@ -1,7 +1,7 @@
 #include <charconv>
 #include <cstdint>
 
-#include "command.hpp"
+#include "cmd/command.hpp"
 
 namespace Command {
 	std::ostream& operator<<(std::ostream& os, const Mode& mode) {

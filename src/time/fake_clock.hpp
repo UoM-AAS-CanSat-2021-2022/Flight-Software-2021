@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "xorshift.hpp"
+#include "rng/xorshift.hpp"
 
 class FakeClock {
 	std::uint32_t time;

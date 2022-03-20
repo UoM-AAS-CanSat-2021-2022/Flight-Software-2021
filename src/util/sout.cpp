@@ -1,4 +1,4 @@
-#include "sout.hpp"
+#include "util/sout.hpp"
 
 int SerialBuf::sync() {
     Serial.print(this->str().c_str());

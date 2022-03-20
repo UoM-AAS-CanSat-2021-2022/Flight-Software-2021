@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <cstdint>
 
-#include "command.hpp"
-#include "sout.hpp"
+#include "cmd/command.hpp"
+#include "util/sout.hpp"
 
 const int led = LED_BUILTIN;
 bool led_on = false;
