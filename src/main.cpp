@@ -1,36 +1,40 @@
 #include <Arduino.h>
+#include <TimeLib.h>
+#include <iomanip>
 #include "util/sout.hpp"
 
 const int led = LED_BUILTIN;
 
+time_t getTeensy3Time();
+
 void setup() {
 	pinMode(led, OUTPUT);
 	Serial.begin(9600);
-}
-
-struct ret_type {
-	bool a;
-	unsigned int b;
-};
-
-ret_type get_val() {
-	static unsigned int x = 42;
-
-	x ^= x << 17;
-	x ^= x >> 13;
-	x ^= x << 5;
-
-	return {(x & 1) == 0, x};
+	setSyncProvider(getTeensy3Time);
 }
 
 void loop() {
-	auto [x, y] = get_val();
-
-	sout << "x: " << x
-	     << ", y: " << std::hex << y
-	     << std::dec
+	auto prev_fill = sout.fill('0');
+	sout << "[c] "
+		 << std::setw(2) << hour()
+		 << ':'
+		 << std::setw(2) << minute()
+		 << ':'
+		 << std::setw(2) << second()
+		 << ' '
+		 << std::setw(2) << year()
+		 << '/'
+		 << std::setw(2) << month()
+		 << '/'
+		 << std::setw(2) << day()
 		 << std::endl;
+	sout.fill(prev_fill);
+
+	digitalWrite(led, second() & 1 ? HIGH : LOW);
 
 	delay(300);
-	digitalWrite(led, x ? HIGH : LOW);
+}
+
+time_t getTeensy3Time() {
+	return Teensy3Clock.get();
 }
