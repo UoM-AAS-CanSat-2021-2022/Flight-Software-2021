@@ -2,7 +2,7 @@
 
 class Camera {
     bool recording;
-    int trigger_pin;
+    const int trigger_pin;
 
     static constexpr int start_delay = 600;
     static constexpr int stop_delay = 600;
@@ -10,7 +10,7 @@ class Camera {
     void pulse_low(const int duration);
 
 public:
-    Camera(int);
+    Camera(const int);
     void setup_pins();
 
     void start_recording();

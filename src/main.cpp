@@ -28,7 +28,7 @@ void loop() {
     }
   }
 
-  if (not read_data) return;
+  if (!read_data) return;
 
   if (buf == "start") {
     sout << "Starting video recording." << std::endl;
