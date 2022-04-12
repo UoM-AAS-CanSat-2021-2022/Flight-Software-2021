@@ -13,8 +13,8 @@ XBee xbee {};
 void setup() {
 	pinMode(led, OUTPUT);
 
-	Serial.begin(9600);
-	XBeeSerial.begin(9600);
+	Serial.begin(230400);
+	XBeeSerial.begin(230400);
 	xbee.setSerial(XBeeSerial);
 }
 
