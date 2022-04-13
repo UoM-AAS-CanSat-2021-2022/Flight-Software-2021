@@ -11,12 +11,5 @@ void setup() {
 }
 
 void loop() {
-	static std::string message = "Hi there!";
-	static auto last_sent = 0;
-	if ((millis() - last_sent) > 1000) {
-		xbm.send(message);
-		last_sent = millis();
-	}
-
 	xbm.loop();
 }
