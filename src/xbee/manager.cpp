@@ -61,9 +61,13 @@ void XBeeManager::send(std::string& msg) {
         static_cast<std::uint8_t>(msg.size())
     };
     _xbee.send(req);
+    _packet_count++;
 }
 
 std::uint16_t XBeeManager::get_panid() const {
     return _panid;
 }
 
+std::uint32_t XBeeManager::get_packet_count() const {
+    return _packet_count;
+}
