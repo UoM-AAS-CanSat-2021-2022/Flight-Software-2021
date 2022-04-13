@@ -10,7 +10,7 @@ namespace bmp388 {
         // Hardware I2C mode
         if (!bmp.begin_I2C()) {
             sout << "Could not find a valid BMP3 sensor, check wiring!" << std::endl;
-            while (1);
+            while (true);
         }
 
         // Set up oversampling and filter initialization

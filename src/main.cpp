@@ -15,12 +15,17 @@ void setup() {
 void loop() {
 	xbm.loop();
 
-	const auto readings = bmp388::read_all();
-	if (!readings) return;
-	
-	const auto [temp, press, alt] = *readings;
-	
-	sout << "Temperature = " << temp << " *C\n";
-	sout << "Pressure = " << press / 100.0 << " hPa\n";
-	sout << "Approx Alt = " << alt << " m" << std::endl;
+	static auto last_read = 0;
+	if (millis() - last_read > 1000) {
+		const auto readings = bmp388::read_all();
+		if (!readings) return;
+
+		const auto [temp, press, alt] = *readings;
+
+		sout << "Temperature = " << temp << " *C\n";
+		sout << "Pressure = " << press / 100.0 << " hPa\n";
+		sout << "Approx Alt = " << alt << " m" << std::endl;
+
+		last_read = millis();
+	}
 }
