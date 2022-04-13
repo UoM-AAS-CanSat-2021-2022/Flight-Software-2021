@@ -1,28 +1,22 @@
 #include <Arduino.h>
-#include <SoftwareSerial.h>
 #include <XBee.h>
-#include <cstdint>
-#include <iomanip>
 #include "util/sout.hpp"
 
 constexpr static int led = LED_BUILTIN;
-SoftwareSerial XBeeSerial { PIN_SERIAL_RX, PIN_SERIAL_TX };
 XBee xbee {};
 
 void setup() {
-	pinMode(led, OUTPUT);
-
-	Serial.begin(9600);
-	XBeeSerial.begin(9600);
-	xbee.setSerial(XBeeSerial);
+	Serial.begin(230400);
+	Serial1.begin(230400);
+	xbee.setSerial(Serial1);
 }
 
 void loop() {
 	static Rx16Response rx {};
 
-    xbee.readPacket();
-    
-    if (xbee.getResponse().isAvailable()) {
+	xbee.readPacket();
+	
+	if (xbee.getResponse().isAvailable()) {
 		sout << "Got response." << std::endl;
 		
 		if (xbee.getResponse().getApiId() == RX_16_RESPONSE) {
@@ -38,7 +32,7 @@ void loop() {
 			// not something we were expecting
 			sout << "Got something unexpected - API ID = " << std::hex << +xbee.getResponse().getApiId() << std::endl;
 		}
-    } else if (xbee.getResponse().isError()) {
+	} else if (xbee.getResponse().isError()) {
 		sout << "Error reading packet.  Error code: " << std::hex << +xbee.getResponse().getErrorCode() << std::endl;
-    }
+	}
 }
