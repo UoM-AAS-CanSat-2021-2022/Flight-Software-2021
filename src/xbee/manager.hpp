@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstdint>
 #include <string>
 #include <XBee.h>
@@ -14,3 +16,4 @@ public:
     std::uint16_t get_panid() const;
     void send(std::string&);
 };
+

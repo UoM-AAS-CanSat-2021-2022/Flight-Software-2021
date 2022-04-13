@@ -66,3 +66,4 @@ void XBeeManager::send(std::string& msg) {
 std::uint16_t XBeeManager::get_panid() const {
     return _panid;
 }
+
