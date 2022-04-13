@@ -1,11 +1,13 @@
 #include <sstream>
 #include <iomanip>
 #include <Arduino.h>
+#include <TimeLib.h>
 #include "xbee/manager.hpp"
 #include "sensor/bmp388.hpp"
 #include "util/sout.hpp"
 
 void send_container_telemetry();
+time_t getTeensy3Time();
 
 XBeeManager xbm;
 
@@ -14,6 +16,7 @@ void setup() {
 	bmp388::setup();
 	xbm.setup(Serial1);
 	xbm.set_panid(6057);
+	setSyncProvider(getTeensy3Time);
 }
 
 void loop() {
@@ -57,4 +60,8 @@ void send_container_telemetry() {
 	// <MODE>,<TP_RELEASED>,<ALTITUDE>,<TEMP>,<VOLTAGE>,<GPS_TIME>,
 	// <GPS_LATITUDE>,<GPS_LONGITUDE>,<GPS_ALTITUDE>,<GPS_SATS>,
 	// <SOFTWARE_STATE>,<CMD_ECHO>
+}
+
+time_t getTeensy3Time() {
+	return Teensy3Clock.get();
 }
