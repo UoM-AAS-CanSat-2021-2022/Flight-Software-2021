@@ -1,36 +1,22 @@
 #include <Arduino.h>
+#include "xbee/manager.hpp"
 #include "util/sout.hpp"
 
-const int led = LED_BUILTIN;
+XBeeManager xbm;
 
 void setup() {
-	pinMode(led, OUTPUT);
 	Serial.begin(9600);
-}
-
-struct ret_type {
-	bool a;
-	unsigned int b;
-};
-
-ret_type get_val() {
-	static unsigned int x = 42;
-
-	x ^= x << 17;
-	x ^= x >> 13;
-	x ^= x << 5;
-
-	return {(x & 1) == 0, x};
+	xbm.setup(Serial1);
+	xbm.set_panid(6057);
 }
 
 void loop() {
-	auto [x, y] = get_val();
+	static std::string message = "Hi there!";
+	static auto last_sent = 0;
+	if ((millis() - last_sent) > 1000) {
+		xbm.send(message);
+		last_sent = millis();
+	}
 
-	sout << "x: " << x
-	     << ", y: " << std::hex << y
-	     << std::dec
-		 << std::endl;
-
-	delay(300);
-	digitalWrite(led, x ? HIGH : LOW);
+	xbm.loop();
 }
