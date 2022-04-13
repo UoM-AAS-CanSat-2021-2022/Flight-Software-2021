@@ -1,21 +1,14 @@
 #include <Arduino.h>
-#include <SoftwareSerial.h>
 #include <XBee.h>
-#include <cstdint>
-#include <iomanip>
-#include <string>
 #include "util/sout.hpp"
 
 constexpr static int led = LED_BUILTIN;
-SoftwareSerial XBeeSerial { PIN_SERIAL_RX, PIN_SERIAL_TX };
 XBee xbee {};
 
 void setup() {
-	pinMode(led, OUTPUT);
-
 	Serial.begin(230400);
-	XBeeSerial.begin(230400);
-	xbee.setSerial(XBeeSerial);
+	Serial1.begin(230400);
+	xbee.setSerial(Serial1);
 }
 
 void loop() {
