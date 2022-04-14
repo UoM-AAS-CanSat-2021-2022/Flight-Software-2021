@@ -1,5 +1,6 @@
+#include <algorithm>
+
 #include <Printers.h>
-#include <iomanip>
 
 #include "xbee/manager.hpp"
 #include "util/sout.hpp"
@@ -16,7 +17,7 @@ void XBeeManager::setup(HardwareSerial& serial) {
 
     auto serial_printer = reinterpret_cast<uintptr_t>(static_cast<Print*>(&Serial));
     _xbee.onPacketError(printErrorCb, serial_printer);
-    _xbee.onTxStatusResponse(printResponseCb, serial_printer);
+    _xbee.onTxStatusResponse(printErrorCb, serial_printer);
     _xbee.onOtherResponse(printResponseCb, serial_printer);
 }
 
@@ -54,20 +55,29 @@ std::uint8_t XBeeManager::set_panid(std::uint16_t panid, std::uint16_t timeout) 
 }
 
 void XBeeManager::send(std::string& msg) {
-    sout << "Sending msg=" << std::quoted(msg) << std::endl;
-    Tx16Request req {
-        0x0000,
-        reinterpret_cast<std::uint8_t*>(msg.data()),
-        static_cast<std::uint8_t>(msg.size())
-    };
-    _xbee.send(req);
-    _packet_count++;
+    static Tx16Request req { 0x0000, NULL, 0 };
+    auto data_ptr = reinterpret_cast<std::uint8_t*>(msg.data());
+    auto data_len = static_cast<std::uint32_t>(msg.size());
+
+    // send message in 100 byte blocks
+    // hopefully should never be necessary but i wrote it just in case
+    while (data_len > 0) {
+        // length of the data to be sent in this request
+        auto req_len = std::min(data_len, 100UL);
+
+        req.setPayload(data_ptr);
+        req.setPayloadLength(req_len);
+        _xbee.send(req);
+
+        data_len -= req_len;
+        data_ptr += req_len;
+    }
+
+    // clear out old invalid pointers
+    req.setPayload(NULL);
+    req.setPayloadLength(0);
 }
 
 std::uint16_t XBeeManager::get_panid() const {
     return _panid;
-}
-
-std::uint32_t XBeeManager::get_packet_count() const {
-    return _packet_count;
 }

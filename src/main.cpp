@@ -1,7 +1,9 @@
-#include <sstream>
-#include <iomanip>
+// this must be included before Arduino.h, because Arduino.h produces colliding macro names
+#include <fmt/core.h>
+
 #include <Arduino.h>
 #include <TimeLib.h>
+
 #include "xbee/manager.hpp"
 #include "sensor/bmp388.hpp"
 #include "util/sout.hpp"
@@ -12,7 +14,7 @@ time_t getTeensy3Time();
 XBeeManager xbm;
 
 void setup() {
-	Serial.begin(9600);
+	Serial.begin(230400);
 	bmp388::setup();
 	xbm.setup(Serial1);
 	xbm.set_panid(6057);
@@ -31,12 +33,8 @@ void loop() {
 
 // TOOD: create a TelemetryManager class to handle all of this
 void send_container_telemetry() {
-	static std::ostringstream out;
-	out.clear();
-	out.str("");
-
 	constexpr static auto team_id = 1057;
-	const auto packet_count = xbm.get_packet_count();
+	static auto packet_count = 0;
 	const auto packet_type = 'C';
 	const auto mode = 'S';
 	const auto tp_released = 'R';
@@ -67,33 +65,31 @@ void send_container_telemetry() {
 	// <MODE>,<TP_RELEASED>,<ALTITUDE>,"IDLE"<TEMP>,<VOLTAGE>,<GPS_TIME>,
 	// <GPS_LATITUDE>,<GPS_LONGITUDE>,<GPS_ALTITUDE>,<GPS_SATS>,
 	// <SOFTWARE_STATE>,<CMD_ECHO>
-	out << team_id
-		<< std::setfill('0')
-		<< ',' << std::setw(2) << hour()
-		       << ':' << std::setw(2) << minute()
-			   << ':' << std::setw(2) << second()
-			   << '.' << std::setw(2) << (millis() % 100)
-		<< ',' << packet_count
-		<< ',' << packet_type
-		<< ',' << mode
-		<< ',' << tp_released
-		<< std::setprecision(1) << std::fixed
-		<< ',' << altitude
-		<< ',' << temp
-		<< std::setprecision(2) << std::fixed
-		<< ',' << voltage
-		<< ',' << gps_time
-		<< std::setprecision(4) << std::fixed
-		<< ',' << gps_latitude
-		<< ',' << gps_longitude
-		<< std::setprecision(1) << std::fixed
-		<< ',' << gps_altitude
-		<< ',' << gps_sats
-		<< ',' << software_state
-		<< ',' << cmd_echo;
+	auto telemetry = fmt::format(
+		"{:04},{:02}:{:02}:{:02}.{:02},{},{},{},{},{:.1f},{:.1f},{:.2f},{},{:.4f},{:.4f},{:.1f},{},{},{}\n",
+		team_id,
+		hour(),
+		minute(),
+		second(),
+		millis() % 100,
+		packet_count,
+		packet_type,
+		mode,
+		tp_released,
+		altitude,
+		temp,
+		voltage,
+		gps_time,
+		gps_latitude,
+		gps_longitude,
+		gps_altitude,
+		gps_sats,
+		software_state,
+		cmd_echo
+	);
 
-	auto telemetry = out.str();
-	sout << telemetry << std::endl;
+	xbm.send(telemetry);
+	packet_count++;
 }
 
 time_t getTeensy3Time() {
