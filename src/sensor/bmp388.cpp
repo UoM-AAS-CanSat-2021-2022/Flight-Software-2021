@@ -1,7 +1,8 @@
+#include <cmath>
+
+#include "constants.hpp"
 #include "util/sout.hpp"
 #include "sensor/bmp388.hpp"
-
-#include <cmath>
 
 Adafruit_BMP3XX bmp;
 

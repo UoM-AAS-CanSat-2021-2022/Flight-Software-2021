@@ -1,7 +1,8 @@
 #include <charconv>
 #include <cstdint>
 
-#include "command.hpp"
+#include "constants.hpp"
+#include "command/parser.hpp"
 
 namespace Command {
 	std::ostream& operator<<(std::ostream& os, const Mode& mode) {
@@ -45,7 +46,7 @@ namespace Command {
 		ec = std::from_chars(buf.data(), buf.data() + buf.size(), s).ec;
 		if (ec != std::errc() || m >= 60) return {};
 
-		return { UtcTime(h, m, s) };
+		return {{ h, m, s }};
 	}
 
 	/*
@@ -94,7 +95,7 @@ namespace Command {
 		std::getline(in, buf, ',');
 		TeamId team_id {};
 		auto ec = std::from_chars(buf.data(), buf.data() + buf.size(), team_id).ec;
-		if (ec != std::errc() || team_id != TEAM_NO) {
+		if (ec != std::errc() || team_id != TEAM_ID) {
 			return {};
 		}
 

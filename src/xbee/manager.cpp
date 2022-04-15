@@ -54,8 +54,9 @@ std::uint8_t XBeeManager::set_panid(std::uint16_t panid, std::uint16_t timeout) 
     return 0;
 }
 
-void XBeeManager::send(std::string& msg) {
-    static Tx16Request req { 0x0000, NULL, 0 };
+void XBeeManager::send(std::uint16_t dest_addr, std::string& msg) {
+    static Tx16Request req;
+    req.setAddress16(dest_addr);
     auto data_ptr = reinterpret_cast<std::uint8_t*>(msg.data());
     auto data_len = static_cast<std::uint32_t>(msg.size());
 
@@ -80,4 +81,8 @@ void XBeeManager::send(std::string& msg) {
 
 std::uint16_t XBeeManager::get_panid() const {
     return _panid;
+}
+
+void XBeeManager::onRx16Response(void (*func)(Rx16Response &, uintptr_t), uintptr_t data) {
+    _xbee.onRx16Response(func, data);
 }

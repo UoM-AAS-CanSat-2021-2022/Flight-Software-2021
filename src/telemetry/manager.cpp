@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <TimeLib.h>
 
+#include "constants.hpp"
 #include "sensor/bmp388.hpp"
 #include "telemetry/manager.hpp"
 #include "util/sout.hpp"
@@ -11,11 +12,11 @@ TelemetryManager::TelemetryManager(XBeeManager& xbm) : _xbm(xbm), _packet_count(
 
 // ensures the correct PAN ID is set before sending the telemetry
 void TelemetryManager::send_telemetry(std::string&& telemetry) {
-	if (_xbm.get_panid() != 1057) {
-		_xbm.set_panid(1057);
+	if (_xbm.get_panid() != gcs_link_panid) {
+		_xbm.set_panid(gcs_link_panid);
 	}
 
-	_xbm.send(telemetry);
+	_xbm.send(gcs_xbee_address, telemetry);
 	_packet_count++;
 }
 
@@ -52,7 +53,7 @@ void TelemetryManager::send_container_telemetry() {
 	// <SOFTWARE_STATE>,<CMD_ECHO>
 	send_telemetry(
 		fmt::format(
-			"1057,{:02}:{:02}:{:02}.{:02},{},C,{},{},{:.1f},{:.1f},{:.2f},{},{:.4f},{:.4f},{:.1f},{},{},{}\n",
+			XSTR(TEAM_ID) ",{:02}:{:02}:{:02}.{:02},{},C,{},{},{:.1f},{:.1f},{:.2f},{},{:.4f},{:.4f},{:.1f},{},{},{}\n",
 			hour(),
 			minute(),
 			second(),
@@ -77,7 +78,7 @@ void TelemetryManager::send_container_telemetry() {
 void TelemetryManager::forward_payload_telemetry(std::string_view payload_telemetry) {
 	send_telemetry(
 		fmt::format(
-			"1057,{:02}:{:02}:{:02}.{:02},{},T,{}\n",
+			XSTR(TEAM_ID) ",{:02}:{:02}:{:02}.{:02},{},T,{}\n",
 			hour(),
 			minute(),
 			second(),
