@@ -18,4 +18,3 @@ public:
     // expose this function from the XBee so that responses can be handled by functions outside of this class
     void onRx16Response(void (*)(Rx16Response &, uintptr_t), uintptr_t data = 0U);
 };
-

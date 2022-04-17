@@ -6,8 +6,57 @@
 #include <string>
 #include <string_view>
 #include <variant>
+#include <fmt/format.h>
 
-namespace Command {
+#include "telemetry/manager.fwd.hpp"
+#include "sensor/manager.fwd.hpp"
+#include "command/parser.fwd.hpp"
+
+enum class SimulationMode {
+	Enable,
+	Disable,
+	Activate,
+};
+
+std::ostream& operator<<(std::ostream&, const SimulationMode&);
+template<>
+struct fmt::formatter<SimulationMode> {
+	template<typename ParseContext>
+	constexpr auto parse(ParseContext& ctx) {
+		return ctx.begin();
+	}
+
+	template<typename FormatContext>
+	auto format(SimulationMode const& mode, FormatContext& ctx) {
+		return fmt::format_to(ctx.out(), "{}", (mode == SimulationMode::Activate) ? 'S' : 'F');
+	}
+};
+
+struct UtcTime {
+	std::uint8_t h;
+	std::uint8_t m;
+	std::uint8_t s;
+};
+using OnOff = bool;
+using Pressure = std::uint32_t;
+using Value = std::variant<std::monostate, OnOff, UtcTime, SimulationMode, Pressure>;
+
+template<>
+struct fmt::formatter<UtcTime> {
+	template<typename ParseContext>
+	constexpr auto parse(ParseContext& ctx) {
+		return ctx.begin();
+	}
+
+	template<typename FormatContext>
+	auto format(UtcTime const& time, FormatContext& ctx) {
+		return fmt::format_to(ctx.out(), "{:02}:{:02}:{:02}", time.h, time.m, time.s);
+	}
+};
+
+class CommandParser {
+	TelemetryManager& _telem_mgr;
+
 	enum class Format {
 		CX,
 		ST,
@@ -15,31 +64,10 @@ namespace Command {
 		SIMP,
 	};
 
-	std::optional<Format> parse_fmt(std::string_view const);
+	std::optional<Format> parse_fmt(std::string_view const) const;
+	std::optional<UtcTime> parse_st(const std::string&) const;
 
-	using OnOff = bool;
-
-	// TODO: move to using the Teensy's RTC
-	struct UtcTime {
-		std::uint8_t h;
-		std::uint8_t m;
-		std::uint8_t s;
-	};
-
-	std::optional<UtcTime> parse_st(std::string_view const);
-
-	enum class Mode {
-		Enable,
-		Disable,
-		Activate,
-	};
-
-	std::ostream& operator<<(std::ostream&, const Mode&);
-
-	using TeamId = std::uint32_t;
-
-	using Pressure = std::uint32_t;
-
-	using Value = std::variant<std::monostate, OnOff, UtcTime, Mode, Pressure>;
-	Value parse(const std::string&);
-}
+public:
+	CommandParser(TelemetryManager&);
+	Value parse(const std::string&) const;
+};

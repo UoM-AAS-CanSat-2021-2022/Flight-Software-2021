@@ -4,46 +4,34 @@
 #include <TimeLib.h>
 
 #include "constants.hpp"
-#include "sensor/bmp388.hpp"
 #include "telemetry/manager.hpp"
 #include "util/sout.hpp"
 
-TelemetryManager::TelemetryManager(XBeeManager& xbm) : _xbm(xbm), _packet_count(0) { }
+TelemetryManager::TelemetryManager(XBeeManager& xbee_mgr, SensorManager& sensor_mgr)
+	: _xbee_mgr(xbee_mgr)
+	, _sensor_mgr(sensor_mgr)
+	, _packet_count(0)
+	, _last_cmd_id("")
+	, _enabled(false) { }
 
 // ensures the correct PAN ID is set before sending the telemetry
 void TelemetryManager::send_telemetry(std::string&& telemetry) {
-	if (_xbm.get_panid() != gcs_link_panid) {
-		_xbm.set_panid(gcs_link_panid);
+	if (_xbee_mgr.get_panid() != gcs_link_panid) {
+		_xbee_mgr.set_panid(gcs_link_panid);
 	}
 
-	_xbm.send(gcs_xbee_address, telemetry);
+	_xbee_mgr.send(gcs_xbee_address, telemetry);
 	_packet_count++;
 }
 
 void TelemetryManager::send_container_telemetry() {
-	const auto mode = 'S';
+	if (!_enabled) return;
+
+	const auto mode = _sensor_mgr.get_sim_mode();
 	const auto tp_released = 'R';
 
-	const auto readings = bmp388::read_all();
-	double altitude;
-	double temp;
-	if (readings) {
-		const auto [t, _, a] = *readings;
-		altitude = a;
-		temp = t;
-	} else {
-		altitude = 0.0;
-		temp = 0.0;
-	}
-
-	double voltage = 5.02;
-	const auto gps_time = "13:23:15";
-	const auto gps_latitude = 69.4201;
-	const auto gps_longitude = -3.2635;
-	const auto gps_altitude = 698.2;
-	const auto gps_sats = 7;
+	const auto telem = _sensor_mgr.read_telemetry();
 	const auto software_state = "IDLE";
-	const auto cmd_echo = "SIMP101325";
 
 	// 1057,17:48:45.91,175,C,S,R,476.2,28.3,5.02,13:23:15,69.4201,-3.2635,698.2,7,IDLE,SIMP101325
 
@@ -61,18 +49,18 @@ void TelemetryManager::send_container_telemetry() {
 			_packet_count,
 			mode,
 			tp_released,
-			altitude,
-			temp,
-			voltage,
-			gps_time,
-			gps_latitude,
-			gps_longitude,
-			gps_altitude,
-			gps_sats,
+			telem.altitude,
+			telem.temp,
+			telem.voltage,
+			telem.gps_time,
+			telem.gps_latitude,
+			telem.gps_longitude,
+			telem.gps_altitude,
+			telem.gps_sats,
 			software_state,
-			cmd_echo
-        )
-    );
+			_last_cmd_id
+		)
+	);
 }
 
 void TelemetryManager::forward_payload_telemetry(std::string_view payload_telemetry) {
@@ -85,8 +73,8 @@ void TelemetryManager::forward_payload_telemetry(std::string_view payload_teleme
 			millis() % 100,
 			_packet_count,
 			payload_telemetry
-        )
-    );
+		)
+	);
 }
 
 std::uint32_t TelemetryManager::get_packet_count() {
@@ -95,4 +83,12 @@ std::uint32_t TelemetryManager::get_packet_count() {
 
 void TelemetryManager::set_packet_count(std::uint32_t packet_count) {
 	_packet_count = packet_count;
+}
+
+void TelemetryManager::set_last_cmd_id(std::string cmd_id) {
+	_last_cmd_id = cmd_id;
+}
+
+void TelemetryManager::set_enabled(bool enabled) {
+	_enabled = enabled;
 }
