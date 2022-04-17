@@ -160,7 +160,6 @@ Value CommandParser::parse(const std::string& input) const {
 
 	// if we parsed a valid command set the cmd id
 	if (!std::holds_alternative<std::monostate>(retval)) {
-		// remove the comma from cmd_id
 		_telem_mgr.set_last_cmd_id(cmd_id);
 	}
 
