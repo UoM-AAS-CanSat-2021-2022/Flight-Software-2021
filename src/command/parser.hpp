@@ -9,8 +9,6 @@
 #include <fmt/format.h>
 
 #include "telemetry/manager.fwd.hpp"
-#include "sensor/manager.fwd.hpp"
-#include "command/parser.fwd.hpp"
 
 enum class SimulationMode {
 	Enable,

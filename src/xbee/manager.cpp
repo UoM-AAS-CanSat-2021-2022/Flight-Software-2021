@@ -24,6 +24,7 @@ void XBeeManager::setup(HardwareSerial& serial) {
 std::uint8_t XBeeManager::set_panid(std::uint16_t panid, std::uint16_t timeout) {
     static std::uint8_t id_cmd[2] = { 'I', 'D' };
     static std::uint8_t wr_cmd[2] = { 'W', 'R' };
+    static std::uint8_t ac_cmd[2] = { 'A', 'C' };
     static AtCommandRequest at_req {};
 
     // extract the upper and lower byte from the panid
@@ -45,6 +46,11 @@ std::uint8_t XBeeManager::set_panid(std::uint16_t panid, std::uint16_t timeout) 
     at_req.clearCommandValue();
     at_req.setCommand(wr_cmd);
 
+    if (_xbee.sendAndWait(at_req, timeout) == XBEE_WAIT_TIMEOUT) {
+        return XBEE_WAIT_TIMEOUT;
+    }
+
+    at_req.setCommand(ac_cmd);
     if (_xbee.sendAndWait(at_req, timeout) == XBEE_WAIT_TIMEOUT) {
         return XBEE_WAIT_TIMEOUT;
     }

@@ -4,9 +4,7 @@
 #include "xbee/manager.hpp"
 #include "sensor/manager.hpp"
 
-#include "telemetry/manager.fwd.hpp"
 #include "sensor/manager.fwd.hpp"
-#include "command/parser.fwd.hpp"
 
 class TelemetryManager {
 	XBeeManager& _xbee_mgr;

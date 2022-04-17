@@ -4,10 +4,6 @@
 
 #include "command/parser.hpp"
 
-#include "telemetry/manager.fwd.hpp"
-#include "sensor/manager.fwd.hpp"
-#include "command/parser.fwd.hpp"
-
 #include <Arduino.h>
 #include <Adafruit_BMP3XX.h>
 
