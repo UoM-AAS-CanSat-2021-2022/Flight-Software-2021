@@ -1,8 +1,7 @@
 #include <Arduino.h>
 #include <XBee.h>
-#include "util/sout.hpp"
+#include <string>
 
-constexpr static int led = LED_BUILTIN;
 XBee xbee {};
 
 void setup() {
@@ -12,14 +11,22 @@ void setup() {
 }
 
 void loop() {
-	static std::string payload { "BRO WHERE ARE MY BEANS????" };
-	static Tx16Request req {
-		0x0000,
-		reinterpret_cast<std::uint8_t*>(payload.data()),
-		static_cast<std::uint8_t>(payload.size())
-	};
-
-	xbee.send(req);
-
-	delay(5000);
+	static std::string buf;
+	bool send = false;
+	if (Serial.available()) {
+		char c = static_cast<char>(Serial.read());
+		buf.push_back(c);
+		if (c == '\n') {
+			send = true;
+		}
+	}
+	if (send) {
+		Tx16Request req {
+			0x0000,
+			reinterpret_cast<std::uint8_t*>(buf.data()),
+			static_cast<std::uint8_t>(buf.size())
+		};
+		xbee.send(req);
+		buf.erase();
+	}
 }
