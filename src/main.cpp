@@ -86,9 +86,14 @@ void loop()
 
     if (millis() - timer > 2000 && GPS.fix) {
       timer = millis(); // reset the timer
-      Serial.println(GPS.day);
-      Serial.println(GPS.month);
-      Serial.println(GPS.year);
+      Serial.print("Location: ");
+      Serial.print(GPS.latitude, 4); Serial.print(GPS.lat);
+      Serial.print(", ");
+      Serial.print(GPS.longitude, 4); Serial.println(GPS.lon);
+      Serial.print("Speed (knots): "); Serial.println(GPS.speed);
+      Serial.print("Angle: "); Serial.println(GPS.angle);
+      Serial.print("Altitude: "); Serial.println(GPS.altitude);
+      Serial.print("Satellites: "); Serial.println((int)GPS.satellites);
     } 
   } else {
     Serial.println("[GPS] No data received");
