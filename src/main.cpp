@@ -37,50 +37,50 @@ void setup()
 
 void loop()
 {
-  //  /* Get a new normalized sensor event */
-  // sensors_event_t accel;
-  // sensors_event_t gyro;
-  // sensors_event_t mag;
-  // sensors_event_t temp;
-  // icm.getEvent(&accel, &gyro, &temp, &mag);
+   /* Get a new normalized sensor event */
+  sensors_event_t accel;
+  sensors_event_t gyro;
+  sensors_event_t mag;
+  sensors_event_t temp;
+  icm.getEvent(&accel, &gyro, &temp, &mag);
 
-  // Serial.print("\t\tTemperature ");
-  // Serial.print(temp.temperature);
-  // Serial.println(" deg C");
+  Serial.print("\t\tTemperature ");
+  Serial.print(temp.temperature);
+  Serial.println(" deg C");
 
-  // /* Display the results (acceleration is measured in m/s^2) */
-  // Serial.print("\t\tAccel X: ");
-  // Serial.print(accel.acceleration.x);
-  // Serial.print(" \tY: ");
-  // Serial.print(accel.acceleration.y);
-  // Serial.print(" \tZ: ");
-  // Serial.print(accel.acceleration.z);
-  // Serial.println(" m/s^2 ");
+  /* Display the results (acceleration is measured in m/s^2) */
+  Serial.print("\t\tAccel X: ");
+  Serial.print(accel.acceleration.x);
+  Serial.print(" \tY: ");
+  Serial.print(accel.acceleration.y);
+  Serial.print(" \tZ: ");
+  Serial.print(accel.acceleration.z);
+  Serial.println(" m/s^2 ");
 
-  // Serial.print("\t\tMag X: ");
-  // Serial.print(mag.magnetic.x);
-  // Serial.print(" \tY: ");
-  // Serial.print(mag.magnetic.y);
-  // Serial.print(" \tZ: ");
-  // Serial.print(mag.magnetic.z);
-  // Serial.println(" uT");
+  Serial.print("\t\tMag X: ");
+  Serial.print(mag.magnetic.x);
+  Serial.print(" \tY: ");
+  Serial.print(mag.magnetic.y);
+  Serial.print(" \tZ: ");
+  Serial.print(mag.magnetic.z);
+  Serial.println(" uT");
 
-  // /* Display the results (acceleration is measured in m/s^2) */
-  // Serial.print("\t\tGyro X: ");
-  // Serial.print(gyro.gyro.x);
-  // Serial.print(" \tY: ");
-  // Serial.print(gyro.gyro.y);
-  // Serial.print(" \tZ: ");
-  // Serial.print(gyro.gyro.z);
-  // Serial.println(" radians/s ");
-  // Serial.println();
+  /* Display the results (acceleration is measured in m/s^2) */
+  Serial.print("\t\tGyro X: ");
+  Serial.print(gyro.gyro.x);
+  Serial.print(" \tY: ");
+  Serial.print(gyro.gyro.y);
+  Serial.print(" \tZ: ");
+  Serial.print(gyro.gyro.z);
+  Serial.println(" radians/s ");
+  Serial.println();
 
   if (GPSSerial.available()) {
     char c = GPS.read();
     Serial1.println(c);
   }
  
-  Serial.println(GPS.fix);
+  //Currently not detecting any data, maybe needs to be outdoors?
   if (GPS.newNMEAreceived()) {
     GPS.parse(GPS.lastNMEA());
 
