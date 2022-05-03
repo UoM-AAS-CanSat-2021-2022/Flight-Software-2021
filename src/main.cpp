@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <XBee.h>
 #include <string>
+#include <iomanip>
+#include <util/sout.hpp>
 
 XBee xbee {};
 
@@ -21,8 +23,9 @@ void loop() {
 		}
 	}
 	if (send) {
+		sout << std::quoted(buf) << std::endl;
 		Tx16Request req {
-			0x0000,
+			0x0002,
 			reinterpret_cast<std::uint8_t*>(buf.data()),
 			static_cast<std::uint8_t>(buf.size())
 		};
