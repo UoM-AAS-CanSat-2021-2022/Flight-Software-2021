@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cstdint>
 #include <vector>
 
@@ -11,55 +12,44 @@
 
 #include <HardwareSerial.h>
 #include <Adafruit_GPS.h>
-
-#include <Adafruit_ICM20X.h>
-#include <Adafruit_ICM20948.h>
 #include <Adafruit_Sensor.h>
-
-#define VOLTAGE_PIN 12 //Random value
 
 // sensor readings / telemetry which the sensor manager is responsible for
 struct Telemetry {
     double altitude;
     double temp;
     double voltage;
-
+    UtcTime gps_time;
     double gps_latitude;
     double gps_longitude;
     double gps_altitude;
-    UtcTime gps_time;
-    double gps_sats;
-
-    std::vector<double> gyro;
-    std::vector<double> acc;
-    std::vector<double> mag;
-
-    UtcTime gps_time;
     std::uint8_t gps_sats;
 };
 
 // class which manages all the sensors, all sensors should be accessed through this class
 class SensorManager {
     // sensor objects
-    HardwareSerial* GPSSerial = &Serial1;
-    Adafruit_GPS GPS(HardwareSerial* Serial1);
+    Adafruit_GPS _gps;
     Adafruit_BMP3XX _bmp;
-    Adafruit_ICM20948 _icm;
 
     SimulationMode _sim_mode;
     double _sim_pressure;
 
-    double _temp;
-    double _gps_latitude;
-    double _gps_longitude;
-    double _gps_altitude;
-    double _gps_time;
-    double _gps_sats;
-
     // performs setup for the BMP sensor
-    void setup_bmp();
     void setup_gps();
-    void setup_imu();
+    void setup_bmp();
+
+    constexpr double pressure2altitude(const double pressure) {
+        // Adapted from readAltitude
+        // Equation taken from BMP180 datasheet (page 16):
+        //  http://www.adafruit.com/datasheets/BST-BMP180-DS000-09.pdf
+
+        // Note that using the equation from wikipedia can give bad results
+        // at high altitude. See this thread for more information:
+        //  http://forums.adafruit.com/viewtopic.php?f=22&t=58064
+        double atmospheric = pressure / 100.0F;
+        return 44330.0 * (1.0 - pow(atmospheric / SEALEVELPRESSURE_HPA, 0.1903));
+    }
 
 public:
     SensorManager();
@@ -68,6 +58,6 @@ public:
     void setup();
     void set_sim_mode(SimulationMode);
     SimulationMode get_sim_mode() const;
-    void set_sim_pressure(std::uint32_t sim_pressure);
-    Telemetry read_telemetry();
+    void set_sim_pressure(std::uint32_t);
+    Telemetry read_container_telemetry();
 };

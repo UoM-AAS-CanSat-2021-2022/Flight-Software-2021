@@ -30,7 +30,7 @@ void TelemetryManager::send_container_telemetry() {
 	const auto mode = _sensor_mgr.get_sim_mode();
 	const auto tp_released = 'R';
 
-	const auto telem = _sensor_mgr.read_telemetry();
+	const auto telem = _sensor_mgr.read_container_telemetry();
 	const auto software_state = "IDLE";
 
 	// 1057,17:48:45.91,175,C,S,R,476.2,28.3,5.02,13:23:15,69.4201,-3.2635,698.2,7,IDLE,SIMP101325

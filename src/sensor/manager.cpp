@@ -3,10 +3,22 @@
 #include "sensor/manager.hpp"
 #include "util/sout.hpp"
 
-SensorManager::SensorManager() : _sim_mode(SimulationMode::Disable), _sim_pressure(101325.0) { }
+SensorManager::SensorManager() :
+    _gps(&Serial5),
+    _sim_mode(SimulationMode::Disable),
+    _sim_pressure(101325.0) { }
+
+void SensorManager::setup_gps() {
+    _gps.begin(9600);
+
+    // Initialization.
+    _gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); 
+    _gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+
+    //_gps.sendCommand(PGCMD_ANTENNA); Should be only needed if there's an external antenna.
+}
 
 void SensorManager::setup_bmp() {
-    // Hardware I2C mode
     if (!_bmp.begin_I2C()) {
         sout << "[BMP] Could not find a valid BMP3 sensor, check wiring!" << std::endl;
         while (true);
@@ -18,27 +30,10 @@ void SensorManager::setup_bmp() {
     _bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
     _bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 }
-void SensorManager::setup_imu() {
-    if(!_icm.begin_I2C()) {
-        sout << "[IMU] Could not find a valid ICM20X sensor, check wiring!" << std::endl;
-        while (true);
-    }
-}
-
-void SensorManager::setup_gps() {
-    GPS.begin(9600);
-
-    // Initialization.
-    GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); 
-    GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-
-    //GPS.sendCommand(PGCMD_ANTENNA); Should be only needed if there's an external antenna.
-}
 
 void SensorManager::setup() {
     setup_bmp();
     setup_gps();
-    setup_imu();
 }
 
 void SensorManager::set_sim_mode(SimulationMode sim_mode) {
@@ -65,94 +60,56 @@ void SensorManager::set_sim_pressure(std::uint32_t sim_pressure) {
     _sim_pressure = static_cast<double>(sim_pressure);
 }
 
-Telemetry SensorManager::read_telemetry() {
-    //BPM readings
+Telemetry SensorManager::read_container_telemetry() {
+    // BMP readings
     const auto reading_succeeded = _bmp.performReading();
+
     // default to sea level pressure
+    double temp { 0.0 };
     double pressure { 1013.25 };
-    if (_sim_mode == SimulationMode::Activate) {
-        pressure = _sim_pressure;
-    } else if (reading_succeeded) {
+    if (reading_succeeded) {
+        temp = _bmp.temperature;
         pressure = _bmp.pressure;
     }
 
-    double temp = 0.0;
-    if (reading_succeeded) {
-        temp = _bmp.temperature;
+    // replace the pressure with the simulation pressure 
+    if (_sim_mode == SimulationMode::Activate) {
+        pressure = _sim_pressure;
     }
+    const auto altitude = pressure2altitude(pressure);
 
-    // Adapted from readAltitude
-    // Equation taken from BMP180 datasheet (page 16):
-    //  http://www.adafruit.com/datasheets/BST-BMP180-DS000-09.pdf
-
-    // Note that using the equation from wikipedia can give bad results
-    // at high altitude. See this thread for more information:
-    //  http://forums.adafruit.com/viewtopic.php?f=22&t=58064
-    double atmospheric = pressure / 100.0F;
-    double altitude = 44330.0 * (1.0 - pow(atmospheric / SEALEVELPRESSURE_HPA, 0.1903));
-
-    //IMU readings
-    sensors_event_t _accel;
-    sensors_event_t _gyro;
-    sensors_event_t _mag;
-    //sensors_event_t temp; GPS also measures temperature.
-    _icm.getEvent(&_accel, &_gyro, nullptr, &_mag);
-
-    std::vector<double> gyro{
-        _gyro.gyro.x, 
-        _gyro.gyro.y, 
-        _gyro.gyro.z
-    };
-    std::vector<double> acc{
-        _accel.acceleration.x, 
-        _accel.acceleration.y, 
-        _accel.acceleration.z
-    };
-    std::vector<double> mag{
-        _mag.magnetic.x, 
-        _mag.magnetic.y, 
-        _mag.magnetic.z
-    };
-    
-    //GPS
-    UtcTime gps_time { 0, 0, 0 };
-	double gps_latitude { 0 };
-	double gps_longitude { 0 };
-	double gps_altitude { 0 };
+    // GPS readings
+    UtcTime gps_time { 0 };
+	double gps_latitude { 0.0 };
+	double gps_longitude { 0.0 };
+	double gps_altitude { 0.0 };
 	std::uint8_t gps_sats { 0 };
 
-    if (GPS.newNMEAreceived() && GPS.fix) {
-        GPS.parse(GPS.lastNMEA());
+    if (_gps.newNMEAreceived() && _gps.fix) {
+        _gps.parse(_gps.lastNMEA());
 
-        UtcTime gps_time;
-
-        gps_latitude = GPS.latitude;
-        gps_longitude = GPS.longitude;
-        gps_altitude = GPS.altitude;
-        gps_sats = (int)GPS.satellites;
-
-        // GPS.speed --Speed in knots
-        // GPS.angle --Angle
+        gps_time.h = _gps.hour;
+        gps_time.m = _gps.minute;
+        gps_time.s = _gps.seconds;
+        gps_latitude = _gps.latitude;
+        gps_longitude = _gps.longitude;
+        gps_altitude = _gps.altitude;
+        gps_sats = _gps.satellites;
     } else {
-        Serial.println("[GPS] No data received");
+        sout << "[_gps] No data received" << std::endl;
     }
 
-    //Voltage
-    double voltage = analogRead(VOLTAGE_PIN);
+    // TODO: replace with an analogRead and some maths when we have the actual PCB
+    double voltage = 5.02;
 
     return {
         altitude,
         temp,
         voltage,
-        
+        gps_time,
         gps_latitude,
         gps_longitude,
         gps_altitude,
-        gps_time,
         gps_sats,
-
-        gyro,
-        acc,
-        mag
     };
 }

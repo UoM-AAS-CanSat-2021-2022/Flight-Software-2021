@@ -29,7 +29,7 @@ void add_tasks_to_runner();
 
 void setup() {
 	Serial.begin(230400);
-	xbee_mgr.setup(Serial1);
+	xbee_mgr.setup(Serial2);
 	xbee_mgr.set_panid(gcs_link_panid);
 	xbee_mgr.onRx16Response(handle_response);
 	sensor_mgr.setup();
