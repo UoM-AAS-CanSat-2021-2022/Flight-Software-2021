@@ -28,12 +28,21 @@ void handle_response(Rx16Response&, uintptr_t);
 void add_tasks_to_runner();
 
 void setup() {
+	// setup pins
+	pinMode(VD_PIN, INPUT);
+	analogReadResolution(ANALOG_READ_BITS);
+
+	// setup serial connections / peripherals
 	Serial.begin(230400);
 	xbee_mgr.setup(Serial2);
 	xbee_mgr.set_panid(gcs_link_panid);
 	xbee_mgr.onRx16Response(handle_response);
 	sensor_mgr.setup();
+
+	// setup RTC as time provider
 	setSyncProvider(getTeensy3Time);
+
+	// add the tasks for the runner to do
 	add_tasks_to_runner();
 }
 

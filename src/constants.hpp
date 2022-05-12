@@ -18,3 +18,12 @@ static constexpr double SEALEVELPRESSURE_HPA = 1013.25;
 static constexpr std::uint16_t container_xbee_address = 0;
 static constexpr std::uint16_t payload_xbee_address = 1;
 static constexpr std::uint16_t gcs_xbee_address = 2;
+
+// voltage divider values
+static constexpr std::uint32_t ANALOG_READ_BITS = 12;
+static constexpr std::uint32_t ANALOG_READ_MAX = (1 << ANALOG_READ_BITS) - 1;
+static constexpr std::uint8_t VD_PIN = 23;
+static constexpr double ADC_MAX_INPUT_V = 3.3;
+static constexpr double VD_INPUT_V = 5.0;
+static constexpr double VD_R1 = 5'000.0; // 120'000.0
+static constexpr double VD_R2 = 10'000.0; // 820'000.0

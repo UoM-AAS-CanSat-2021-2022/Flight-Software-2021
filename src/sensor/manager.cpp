@@ -99,8 +99,11 @@ Telemetry SensorManager::read_container_telemetry() {
         sout << "[_gps] No data received" << std::endl;
     }
 
-    // TODO: replace with an analogRead and some maths when we have the actual PCB
-    double voltage = 5.02;
+    // voltage maths
+    static constexpr auto multiplier = (ADC_MAX_INPUT_V / ANALOG_READ_MAX) * ((VD_R1 + VD_R2) / VD_R2);
+
+    const auto pin_value = analogRead(VD_PIN);
+    const auto voltage = static_cast<double>(pin_value) * multiplier;
 
     return {
         altitude,
