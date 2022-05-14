@@ -48,7 +48,7 @@ class SensorManager {
         // at high altitude. See this thread for more information:
         //  http://forums.adafruit.com/viewtopic.php?f=22&t=58064
         double atmospheric = pressure / 100.0F;
-        return 44330.0 * (1.0 - pow(atmospheric / SEALEVELPRESSURE_HPA, 0.1903));
+        return 44330.0 * (1.0 - pow(atmospheric / SEALEVEL_PRESSURE_HPA, 0.1903));
     }
 
 public:

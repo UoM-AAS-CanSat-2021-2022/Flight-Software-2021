@@ -2,6 +2,7 @@
 
 #include <Printers.h>
 
+#include "constants.hpp"
 #include "xbee/manager.hpp"
 #include "util/sout.hpp"
 
@@ -12,7 +13,7 @@ void XBeeManager::loop() {
 }
 
 void XBeeManager::setup(HardwareSerial& serial) {
-    serial.begin(230400);
+    serial.begin(XBEE_SERIAL_BAUD);
     _xbee.setSerial(serial);
 
     auto serial_printer = reinterpret_cast<uintptr_t>(static_cast<Print*>(&Serial));

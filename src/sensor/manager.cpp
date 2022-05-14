@@ -4,12 +4,12 @@
 #include "util/sout.hpp"
 
 SensorManager::SensorManager() :
-    _gps(&Serial5),
+    _gps(&GPS_SERIAL),
     _sim_mode(SimulationMode::Disable),
-    _sim_pressure(101325.0) { }
+    _sim_pressure(SEALEVEL_PRESSURE_PA) { }
 
 void SensorManager::setup_gps() {
-    _gps.begin(9600);
+    _gps.begin(GPS_SERIAL_BAUD);
 
     // Initialization.
     _gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); 
@@ -66,7 +66,7 @@ Telemetry SensorManager::read_container_telemetry() {
 
     // default to sea level pressure
     double temp { 0.0 };
-    double pressure { 1013.25 };
+    double pressure { SEALEVEL_PRESSURE_PA };
     if (reading_succeeded) {
         temp = _bmp.temperature;
         pressure = _bmp.pressure;

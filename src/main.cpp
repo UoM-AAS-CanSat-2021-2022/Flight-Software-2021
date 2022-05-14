@@ -31,11 +31,12 @@ void setup() {
 	// setup pins
 	pinMode(VD_PIN, INPUT);
 	analogReadResolution(ANALOG_READ_BITS);
+	pinMode(BUZZER_PIN, OUTPUT);
 
 	// setup serial connections / peripherals
-	Serial.begin(230400);
-	xbee_mgr.setup(Serial2);
-	xbee_mgr.set_panid(gcs_link_panid);
+	Serial.begin(DEBUG_SERIAL_BAUD);
+	xbee_mgr.setup(XBEE_SERIAL);
+	xbee_mgr.set_panid(GCS_LINK_PANID);
 	xbee_mgr.onRx16Response(handle_response);
 	sensor_mgr.setup();
 
@@ -70,12 +71,12 @@ void add_tasks_to_runner() {
 			if (!tp_released)
 				return;
 
-			xbee_mgr.set_panid(payload_link_panid);
+			xbee_mgr.set_panid(PAYLOAD_LINK_PANID);
 			// poll the container for the data, for now just mock it out
 			// NOTE: eventually none of this will be needed as the handle_response method
 			//       will get called for the response from the XBee
 			std::string_view mock_payload_relay_data { "165.2,13.7,5.02,0.18,0.08,-0.18,0.12,0.31,9.8,0.19,-0.05,0.47,12,LANDED" };
-			xbee_mgr.set_panid(gcs_link_panid);
+			xbee_mgr.set_panid(GCS_LINK_PANID);
 			telem_mgr.forward_payload_telemetry(mock_payload_relay_data);
 		});
 }
@@ -120,8 +121,8 @@ struct CommandHandler {
 
 void handle_response(Rx16Response& resp, uintptr_t) {
 	// make sure we are listening on the gcs link as much as possible
-	if (xbee_mgr.get_panid() != gcs_link_panid) {
-		xbee_mgr.set_panid(gcs_link_panid);
+	if (xbee_mgr.get_panid() != GCS_LINK_PANID) {
+		xbee_mgr.set_panid(GCS_LINK_PANID);
 	}
 
 	std::string_view data_view {
@@ -129,14 +130,21 @@ void handle_response(Rx16Response& resp, uintptr_t) {
 		static_cast<size_t>(resp.getDataLength())
 	};
 
+	sout << "BUZZER_PIN, HIGH" << std::endl;
+	digitalWriteFast(BUZZER_PIN, HIGH);
+	runner.run_after(5'000, []() {
+		sout << "BUZZER_PIN, LOW" << std::endl;
+		digitalWrite(BUZZER_PIN, LOW);
+	});
+
 	switch (resp.getRemoteAddress16()) {
-	case gcs_xbee_address: {
+	case GCS_XBEE_ADDRESS: {
 		// data is from the ground station, interpret it as a command
 		std::string cmd_string { data_view };
 		std::visit(CommandHandler {}, cmd_parser.parse(cmd_string));
 		break;
 	}
-	case payload_xbee_address:
+	case PAYLOAD_XBEE_ADDRESS:
 		// data is from payload, forward it to the ground station
 		telem_mgr.forward_payload_telemetry(data_view);
 		break;

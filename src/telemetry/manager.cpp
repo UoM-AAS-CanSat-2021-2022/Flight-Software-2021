@@ -16,11 +16,11 @@ TelemetryManager::TelemetryManager(XBeeManager& xbee_mgr, SensorManager& sensor_
 
 // ensures the correct PAN ID is set before sending the telemetry
 void TelemetryManager::send_telemetry(std::string&& telemetry) {
-	if (_xbee_mgr.get_panid() != gcs_link_panid) {
-		_xbee_mgr.set_panid(gcs_link_panid);
+	if (_xbee_mgr.get_panid() != GCS_LINK_PANID) {
+		_xbee_mgr.set_panid(GCS_LINK_PANID);
 	}
 
-	_xbee_mgr.send(gcs_xbee_address, telemetry);
+	_xbee_mgr.send(GCS_XBEE_ADDRESS, telemetry);
 	_packet_count++;
 }
 
