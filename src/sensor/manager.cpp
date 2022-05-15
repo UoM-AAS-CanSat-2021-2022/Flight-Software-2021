@@ -3,66 +3,29 @@
 #include "sensor/manager.hpp"
 #include "util/sout.hpp"
 
-SensorManager::SensorManager() :
-    _gps(&GPS_SERIAL),
-    _sim_mode(SimulationMode::Disable),
-    _sim_pressure(SEALEVEL_PRESSURE_PA) { }
-
-void SensorManager::setup_gps() {
-    _gps.begin(GPS_SERIAL_BAUD);
-
-    // Initialization.
-    _gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); 
-    _gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-
-    //_gps.sendCommand(PGCMD_ANTENNA); Should be only needed if there's an external antenna.
+void SensorManager::setup_imu() {
+    icm_valid = _icm.begin_I2C();
 }
 
 void SensorManager::setup_bmp() {
-    if (!_bmp.begin_I2C()) {
-        sout << "[BMP] Could not find a valid BMP3 sensor, check wiring!" << std::endl;
-        while (true);
+    if (bmp_valid = _bmp.begin_I2C()) {
+        // Set up oversampling and filter initialization
+        if (bmp_valid)
+        _bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
+        _bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
+        _bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
+        _bmp.setOutputDataRate(BMP3_ODR_50_HZ);
     }
-
-    // Set up oversampling and filter initialization
-    _bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
-    _bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
-    _bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
-    _bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 }
 
 void SensorManager::setup() {
     setup_bmp();
-    setup_gps();
+    setup_imu();
 }
 
-void SensorManager::set_sim_mode(SimulationMode sim_mode) {
-    switch (sim_mode) {
-        case SimulationMode::Disable:
-            _sim_mode = SimulationMode::Disable;
-            break;
-        case SimulationMode::Enable:
-            if (_sim_mode == SimulationMode::Disable)
-                _sim_mode = SimulationMode::Enable;
-            break;
-        case SimulationMode::Activate:
-            if (_sim_mode == SimulationMode::Enable)
-                _sim_mode = SimulationMode::Activate;
-            break;
-    }
-}
-
-SimulationMode SensorManager::get_sim_mode() const {
-    return _sim_mode;
-}
-
-void SensorManager::set_sim_pressure(std::uint32_t sim_pressure) {
-    _sim_pressure = static_cast<double>(sim_pressure);
-}
-
-Telemetry SensorManager::read_container_telemetry() {
+Telemetry SensorManager::read_payload_telemetry() {
     // BMP readings
-    const auto reading_succeeded = _bmp.performReading();
+    const auto reading_succeeded = bmp_valid && _bmp.performReading();
 
     // default to sea level pressure
     double temp { 0.0 };
@@ -71,48 +34,44 @@ Telemetry SensorManager::read_container_telemetry() {
         temp = _bmp.temperature;
         pressure = _bmp.pressure;
     }
-
-    // replace the pressure with the simulation pressure 
-    if (_sim_mode == SimulationMode::Activate) {
-        pressure = _sim_pressure;
-    }
     const auto altitude = pressure2altitude(pressure);
 
-    // GPS readings
-    UtcTime gps_time { 0 };
-	double gps_latitude { 0.0 };
-	double gps_longitude { 0.0 };
-	double gps_altitude { 0.0 };
-	std::uint8_t gps_sats { 0 };
-
-    if (_gps.newNMEAreceived() && _gps.fix) {
-        _gps.parse(_gps.lastNMEA());
-
-        gps_time.h = _gps.hour;
-        gps_time.m = _gps.minute;
-        gps_time.s = _gps.seconds;
-        gps_latitude = _gps.latitude;
-        gps_longitude = _gps.longitude;
-        gps_altitude = _gps.altitude;
-        gps_sats = _gps.satellites;
+    // IMU readings
+    sensors_event_t accel;
+    sensors_event_t gyro;
+    sensors_event_t mag;
+    if (icm_valid) {
+        _icm.getEvent(&accel, &gyro, nullptr, &mag);
     } else {
-        sout << "[_gps] No data received" << std::endl;
+        accel.acceleration = { 0 };
+        gyro.gyro = { 0 };
+        mag.magnetic = { 0 };
     }
 
     // voltage maths
-    static constexpr auto multiplier = (ADC_MAX_INPUT_V / ANALOG_READ_MAX) * ((VD_R1 + VD_R2) / VD_R2);
+    // static constexpr auto multiplier = (ADC_MAX_INPUT_V / ANALOG_READ_MAX) * ((VD_R1 + VD_R2) / VD_R2);
 
-    const auto pin_value = analogRead(VD_PIN);
-    const auto voltage = static_cast<double>(pin_value) * multiplier;
+    // const auto pin_value = analogRead(VD_PIN);
+    // const auto voltage = static_cast<double>(pin_value) * multiplier;
+    constexpr double voltage = 5.02;
 
     return {
         altitude,
         temp,
         voltage,
-        gps_time,
-        gps_latitude,
-        gps_longitude,
-        gps_altitude,
-        gps_sats,
+
+        gyro.gyro.x,
+        gyro.gyro.y,
+        gyro.gyro.z,
+
+        accel.acceleration.x,
+        accel.acceleration.y,
+        accel.acceleration.z,
+
+        mag.magnetic.x,
+        mag.magnetic.y,
+        mag.magnetic.z,
+
+        0.0
     };
 }

@@ -3,40 +3,45 @@
 #include <cstdint>
 #include <vector>
 
-#include "command/parser.hpp"
-
 #include <Arduino.h>
 
 //Sensor libraries
-#include <Adafruit_BMP3XX.h>
-
-#include <HardwareSerial.h>
-#include <Adafruit_GPS.h>
 #include <Adafruit_Sensor.h>
+#include <Adafruit_BMP3XX.h>
+#include <Adafruit_ICM20948.h>
 
 // sensor readings / telemetry which the sensor manager is responsible for
 struct Telemetry {
     double altitude;
     double temp;
     double voltage;
-    UtcTime gps_time;
-    double gps_latitude;
-    double gps_longitude;
-    double gps_altitude;
-    std::uint8_t gps_sats;
+
+    double gyro_r;
+    double gyro_p;
+    double gyro_y;
+
+    double accel_r;
+    double accel_p;
+    double accel_y;
+
+    double mag_r;
+    double mag_p;
+    double mag_y;
+
+    double pointing_error;
 };
 
 // class which manages all the sensors, all sensors should be accessed through this class
 class SensorManager {
     // sensor objects
-    Adafruit_GPS _gps;
+    Adafruit_ICM20948 _icm;
     Adafruit_BMP3XX _bmp;
 
-    SimulationMode _sim_mode;
-    double _sim_pressure;
+    // did the sensor intialize correctly
+    bool icm_valid;
+    bool bmp_valid;
 
-    // performs setup for the BMP sensor
-    void setup_gps();
+    void setup_imu();
     void setup_bmp();
 
     constexpr double pressure2altitude(const double pressure) {
@@ -52,12 +57,7 @@ class SensorManager {
     }
 
 public:
-    SensorManager();
-
     // runs all the setup functions for each sensor
     void setup();
-    void set_sim_mode(SimulationMode);
-    SimulationMode get_sim_mode() const;
-    void set_sim_pressure(std::uint32_t);
-    Telemetry read_container_telemetry();
+    Telemetry read_payload_telemetry();
 };
