@@ -21,7 +21,9 @@ void TelemetryManager::send_telemetry(std::string&& telemetry) {
 }
 
 void TelemetryManager::send_payload_telemetry() {
+	sout << "hii" << std::endl;
 	const auto telem = _sensor_mgr.read_payload_telemetry();
+	sout << "hiii" << std::endl;
 	// const auto software_state = "VIBING";
 
 	// 1057,17:48:45.91,175,C,S,R,476.2,28.3,5.02,13:23:15,69.4201,-3.2635,698.2,7,IDLE,SIMP101325
