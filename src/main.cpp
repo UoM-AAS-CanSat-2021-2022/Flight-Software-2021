@@ -4,6 +4,12 @@
 #include <string>
 #include <string_view>
 
+#include <Arduino.h>
+// Arduino has so many conflicting names smh my head
+#undef B1
+#include <TimeLib.h>
+#include <Servo.h>
+
 #include "command/parser.hpp"
 #include "constants.hpp"
 #include "runner.hpp"
@@ -12,15 +18,12 @@
 #include "util/sout.hpp"
 #include "xbee/manager.hpp"
 
-// Arduino has so many conflicting names smh my head
-#include <Arduino.h>
-#include <TimeLib.h>
-
 XBeeManager xbee_mgr;
 SensorManager sensor_mgr {};
 TelemetryManager telem_mgr { xbee_mgr, sensor_mgr };
 CommandParser cmd_parser { telem_mgr };
 Runner runner;
+Servo servo;
 const bool tp_released = false;
 
 time_t getTeensy3Time();
@@ -32,6 +35,12 @@ void setup() {
 	pinMode(VD_PIN, INPUT);
 	analogReadResolution(ANALOG_READ_BITS);
 	pinMode(BUZZER_PIN, OUTPUT);
+	pinMode(13, OUTPUT);
+
+	digitalWriteFast(13, HIGH);
+
+	// setup servo pins
+	servo.attach(3);
 
 	// setup serial connections / peripherals
 	Serial.begin(DEBUG_SERIAL_BAUD);
@@ -57,6 +66,21 @@ void add_tasks_to_runner() {
 	// run the xbee manager's loop every time
 	runner.schedule_task(
 		[]() { xbee_mgr.loop(); });
+
+	runner.schedule_task(
+		[]() {
+			if (Serial.available() && Serial.read() == 'A') {
+				//sout << "[servo] writing 180" << std::endl;
+				//servo.write(180);
+				//runner.run_after(15, []() {
+				//	sout << "[servo] writing 0" << std::endl;
+				//	servo.write(0);
+				//});
+				servo.write(180);
+				runner.run_after(20'000, []() { servo.write(90); });
+			}
+		}
+	);
 
 	// send the container telemetry once a second if its enabled
 	runner.schedule_task(
@@ -129,13 +153,6 @@ void handle_response(Rx16Response& resp, uintptr_t) {
 		reinterpret_cast<char*>(resp.getData()),
 		static_cast<size_t>(resp.getDataLength())
 	};
-
-	sout << "BUZZER_PIN, HIGH" << std::endl;
-	digitalWriteFast(BUZZER_PIN, HIGH);
-	runner.run_after(5'000, []() {
-		sout << "BUZZER_PIN, LOW" << std::endl;
-		digitalWrite(BUZZER_PIN, LOW);
-	});
 
 	switch (resp.getRemoteAddress16()) {
 	case GCS_XBEE_ADDRESS: {

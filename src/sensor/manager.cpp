@@ -96,7 +96,7 @@ Telemetry SensorManager::read_container_telemetry() {
         gps_altitude = _gps.altitude;
         gps_sats = _gps.satellites;
     } else {
-        sout << "[_gps] No data received" << std::endl;
+        // sout << "[_gps] No data received" << std::endl;
     }
 
     // voltage maths
