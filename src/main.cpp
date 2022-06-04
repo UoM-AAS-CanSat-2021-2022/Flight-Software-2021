@@ -32,6 +32,7 @@ void setup() {
 	pinMode(VD_PIN, INPUT);
 	analogReadResolution(ANALOG_READ_BITS);
 	pinMode(BUZZER_PIN, OUTPUT);
+	pinMode(LED_BUILTIN, OUTPUT);
 
 	// setup serial connections / peripherals
 	Serial.begin(DEBUG_SERIAL_BAUD);
@@ -129,13 +130,6 @@ void handle_response(Rx16Response& resp, uintptr_t) {
 		reinterpret_cast<char*>(resp.getData()),
 		static_cast<size_t>(resp.getDataLength())
 	};
-
-	sout << "BUZZER_PIN, HIGH" << std::endl;
-	digitalWriteFast(BUZZER_PIN, HIGH);
-	runner.run_after(5'000, []() {
-		sout << "BUZZER_PIN, LOW" << std::endl;
-		digitalWrite(BUZZER_PIN, LOW);
-	});
 
 	switch (resp.getRemoteAddress16()) {
 	case GCS_XBEE_ADDRESS: {

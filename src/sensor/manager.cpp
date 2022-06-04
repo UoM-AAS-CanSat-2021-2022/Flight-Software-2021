@@ -19,7 +19,7 @@ void SensorManager::setup_gps() {
 }
 
 void SensorManager::setup_bmp() {
-    if (!_bmp.begin_I2C()) {
+    if (!_bmp.begin_I2C(BMP_ADDR, &BMP_WIRE)) {
         sout << "[BMP] Could not find a valid BMP3 sensor, check wiring!" << std::endl;
         while (true);
     }

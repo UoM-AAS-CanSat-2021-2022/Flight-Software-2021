@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <Arduino.h>
+#include <Wire.h>
 // prevent colliding symbol errors
 #undef B1
 
@@ -33,11 +34,15 @@ static constexpr double VD_R1 = 5'000.0; // 120'000.0
 static constexpr double VD_R2 = 10'000.0; // 820'000.0
 
 // Serial interfaces and baud rates
-static auto& XBEE_SERIAL = Serial2;
+static auto& XBEE_SERIAL = Serial1;
 static auto& GPS_SERIAL = Serial5;
 static constexpr long DEBUG_SERIAL_BAUD = 230400; 
 static constexpr long XBEE_SERIAL_BAUD = 230400;
 static constexpr long GPS_SERIAL_BAUD = 9600;
+
+// I2C interfaces and addresses
+static constexpr auto& BMP_WIRE = Wire1;
+static constexpr std::uint8_t BMP_ADDR = 119;
 
 // other pins
 static constexpr std::uint8_t BUZZER_PIN = 6;
