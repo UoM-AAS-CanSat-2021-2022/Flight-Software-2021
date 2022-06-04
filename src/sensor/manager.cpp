@@ -2,6 +2,8 @@
 #include "constants.hpp"
 #include "sensor/manager.hpp"
 #include "util/sout.hpp"
+#include <vector>
+#include <numeric>
 
 SensorManager::SensorManager() :
     _gps(&GPS_SERIAL),
@@ -17,6 +19,7 @@ void SensorManager::setup_gps() {
 
     //_gps.sendCommand(PGCMD_ANTENNA); Should be only needed if there's an external antenna.
 }
+
 
 void SensorManager::setup_bmp() {
     if (!_bmp.begin_I2C(BMP_ADDR, &BMP_WIRE)) {
@@ -59,6 +62,24 @@ SimulationMode SensorManager::get_sim_mode() const {
 void SensorManager::set_sim_pressure(std::uint32_t sim_pressure) {
     _sim_pressure = static_cast<double>(sim_pressure);
 }
+
+float average(std::vector<float> const& v){
+    if(v.empty()){
+        return 0;
+    }
+
+    auto const count = static_cast<float>(v.size());
+    return std::reduce(v.begin(), v.end()) / count;
+}
+
+float SensorManager::calibrate() {
+    std::vector<float> vect;
+    for (int i = 0; i < 100; i++) {
+        vect.push_back(read_container_telemetry().altitude);
+    }
+    correction = average(vect);
+}
+
 
 Telemetry SensorManager::read_container_telemetry() {
     // BMP readings
@@ -106,7 +127,7 @@ Telemetry SensorManager::read_container_telemetry() {
     const auto voltage = static_cast<double>(pin_value) * multiplier;
 
     return {
-        altitude,
+        altitude-correction,
         temp,
         voltage,
         gps_time,

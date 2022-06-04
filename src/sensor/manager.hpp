@@ -39,6 +39,9 @@ class SensorManager {
     void setup_gps();
     void setup_bmp();
 
+    float calibrate();
+    float correction = 0;
+
     constexpr double pressure2altitude(const double pressure) {
         // Adapted from readAltitude
         // Equation taken from BMP180 datasheet (page 16):
