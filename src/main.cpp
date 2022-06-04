@@ -11,6 +11,7 @@
 #include "telemetry/manager.hpp"
 #include "util/sout.hpp"
 #include "xbee/manager.hpp"
+#include <Servo.h>
 
 // Arduino has so many conflicting names smh my head
 #include <Arduino.h>
@@ -22,6 +23,10 @@ TelemetryManager telem_mgr { xbee_mgr, sensor_mgr };
 CommandParser cmd_parser { telem_mgr };
 Runner runner;
 const bool tp_released = false;
+const bool parachute_released = false;
+Servo SERVO_PARACHUTE;
+Servo SERVO_CONTINUOUS;
+Servo SERVO_SPOOL;
 
 time_t getTeensy3Time();
 void handle_response(Rx16Response&, uintptr_t);
@@ -33,6 +38,9 @@ void setup() {
 	analogReadResolution(ANALOG_READ_BITS);
 	pinMode(BUZZER_PIN, OUTPUT);
 	pinMode(LED_BUILTIN, OUTPUT);
+	pinMode(SERVO_PARACHUTE_PIN, OUTPUT);
+	pinMode(SERVO_SPOOL_PIN, OUTPUT);
+	pinMode(SERVO_CONTINUOUS_PIN, OUTPUT);
 
 	// setup serial connections / peripherals
 	Serial.begin(DEBUG_SERIAL_BAUD);
@@ -40,6 +48,10 @@ void setup() {
 	xbee_mgr.set_panid(GCS_LINK_PANID);
 	xbee_mgr.onRx16Response(handle_response);
 	sensor_mgr.setup();
+	
+	SERVO_PARACHUTE.attach(SERVO_PARACHUTE_PIN, 1000, 2000);
+    SERVO_SPOOL.attach(SERVO_SPOOL_PIN, 1000, 2000);
+	SERVO_CONTINUOUS.attach(SERVO_CONTINUOUS_PIN, 1350, 1650);
 
 	// setup RTC as time provider
 	setSyncProvider(getTeensy3Time);
@@ -79,6 +91,36 @@ void add_tasks_to_runner() {
 			std::string_view mock_payload_relay_data { "165.2,13.7,5.02,0.18,0.08,-0.18,0.12,0.31,9.8,0.19,-0.05,0.47,12,LANDED" };
 			xbee_mgr.set_panid(GCS_LINK_PANID);
 			telem_mgr.forward_payload_telemetry(mock_payload_relay_data);
+		});
+	
+	// Release parachute
+	runner.schedule_task(
+		1000,
+		[]() {
+			if (parachute_released==true)
+				return;
+			
+			const auto telem = sensor_mgr.read_container_telemetry();
+			if (telem.altitude <= 400){
+				SERVO_PARACHUTE.write(90);
+				parachute_released==true;
+			}
+		});
+
+	// Release payload
+	runner.schedule_task(
+		1000,
+		[]() {
+			if (tp_released==true)
+				return;
+			
+			const auto telem = sensor_mgr.read_container_telemetry();
+			if (telem.altitude <= 300){
+				SERVO_SPOOL.write(130);
+				SERVO_CONTINUOUS.write(180);
+				runner.run_after(20'000, []() { SERVO_CONTINUOUS.write(88); });
+				tp_released==true;
+			}
 		});
 }
 

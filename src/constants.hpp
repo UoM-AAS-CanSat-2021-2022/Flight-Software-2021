@@ -46,3 +46,9 @@ static constexpr std::uint8_t BMP_ADDR = 119;
 
 // other pins
 static constexpr std::uint8_t BUZZER_PIN = 6;
+
+//Servo pins
+static constexpr std::uint8_t SERVO_PARACHUTE_PIN = 0;
+static constexpr std::uint8_t SERVO_SPOOL_PIN = 1;
+static constexpr std::uint8_t SERVO_CONTINUOUS_PIN = 2;
+
