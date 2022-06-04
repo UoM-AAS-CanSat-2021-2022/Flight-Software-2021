@@ -39,7 +39,7 @@ class SensorManager {
     void setup_gps();
     void setup_bmp();
 
-    float calibrate();
+    void calibrate();
     float correction = 0;
 
     constexpr double pressure2altitude(const double pressure) {

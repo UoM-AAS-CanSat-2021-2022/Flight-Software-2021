@@ -72,10 +72,11 @@ float average(std::vector<float> const& v){
     return std::reduce(v.begin(), v.end()) / count;
 }
 
-float SensorManager::calibrate() {
+void SensorManager::calibrate() {
     std::vector<float> vect;
     for (int i = 0; i < 100; i++) {
         vect.push_back(read_container_telemetry().altitude);
+        delay(10);
     }
     correction = average(vect);
 }
