@@ -116,10 +116,10 @@ void add_tasks_to_runner() {
 			
 			const auto telem = sensor_mgr.read_container_telemetry();
 			if (telem.altitude <= 300){
+				tp_released==true;
 				SERVO_SPOOL.write(130);
 				SERVO_CONTINUOUS.write(180);
 				runner.run_after(20'000, []() { SERVO_CONTINUOUS.write(88); });
-				tp_released==true;
 			}
 		});
 }
