@@ -102,8 +102,8 @@ void add_tasks_to_runner() {
 			
 			const auto telem = sensor_mgr.read_container_telemetry();
 			if (telem.altitude <= 400){
-				SERVO_PARACHUTE.write(90);
 				parachute_released==true;
+				SERVO_PARACHUTE.write(90);
 			}
 		});
 
