@@ -1,0 +1,5 @@
+Settings class:
+  - wraps a struct which holds all of the settings
+  - methods for accesing each struct member with a getter / setter.
+    - I don't like this pattern but it allows us to know when any of the variables were changed during the loop.
+  - writeback method which pushes all changes to the EEPROM, called once per loop / every few ms if that is better.
