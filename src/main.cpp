@@ -8,6 +8,7 @@
 #include "constants.hpp"
 #include "runner.hpp"
 #include "sensor/manager.hpp"
+#include "mechanisms/manager.hpp"
 #include "telemetry/manager.hpp"
 #include "util/sout.hpp"
 #include "xbee/manager.hpp"
@@ -18,10 +19,12 @@
 
 XBeeManager xbee_mgr;
 SensorManager sensor_mgr {};
+DescentManager descent_mgr {};
 TelemetryManager telem_mgr { xbee_mgr, sensor_mgr };
 CommandParser cmd_parser { telem_mgr };
 Runner runner;
-const bool tp_released = false;
+
+double current_pressure = 90000;
 
 time_t getTeensy3Time();
 void handle_response(Rx16Response&, uintptr_t);
@@ -30,8 +33,11 @@ void add_tasks_to_runner();
 void setup() {
 	// setup pins
 	pinMode(VD_PIN, INPUT);
+	pinMode(RETRACT_PIN, INPUT);
 	analogReadResolution(ANALOG_READ_BITS);
+
 	pinMode(BUZZER_PIN, OUTPUT);
+	digitalWrite(BUZZER_PIN, LOW);
 
 	// setup serial connections / peripherals
 	Serial.begin(DEBUG_SERIAL_BAUD);
@@ -45,10 +51,40 @@ void setup() {
 
 	// add the tasks for the runner to do
 	add_tasks_to_runner();
+	
+	// Initializes altitude to 1000.
+	sensor_mgr.set_sim_mode(SimulationMode::Enable);
+	sensor_mgr.set_sim_mode(SimulationMode::Activate);
+
+	sensor_mgr.set_sim_pressure(current_pressure);
+	delay(2000);
 }
 
 void loop() {
-	runner.run();
+	current_pressure+=0.5;
+	sensor_mgr.set_sim_pressure(current_pressure);
+	//sensor_mgr.read_container_telemetry();
+
+	Serial.print("Altitude at ");
+	Serial.print(current_pressure);
+	Serial.println(":");
+	Serial.println(sensor_mgr.altitude);
+
+	if (descent_mgr.parachute_open == false && sensor_mgr.altitude <= 400) {
+		Serial.println("< 400");
+		descent_mgr.release_parachute();
+		
+	} else if (descent_mgr.payload_lowered == false && sensor_mgr.altitude <= 300) {
+		Serial.println("< 300");
+		descent_mgr.lower_payload();
+
+	} else if (sensor_mgr.altitude <= 5) {
+		Serial.println("< 5");
+		digitalWrite(BUZZER_PIN, HIGH);
+		//descent_mgr.retract_payload();
+	}
+
+	runner.run(); 
 }
 
 // simple function to add tasks to the runner
@@ -68,7 +104,7 @@ void add_tasks_to_runner() {
 	runner.schedule_task(
 		250,
 		[]() {
-			if (!tp_released)
+			if (!descent_mgr.payload_released)
 				return;
 
 			xbee_mgr.set_panid(PAYLOAD_LINK_PANID);
@@ -79,6 +115,15 @@ void add_tasks_to_runner() {
 			xbee_mgr.set_panid(GCS_LINK_PANID);
 			telem_mgr.forward_payload_telemetry(mock_payload_relay_data);
 		});
+
+	runner.schedule_task(
+		125,
+		[]() {
+			sensor_mgr.read_container_telemetry();
+		});
+
+	
+
 }
 
 // ngl it feels weird to have this here but I couldn't really think of a better place to put it...
@@ -130,12 +175,12 @@ void handle_response(Rx16Response& resp, uintptr_t) {
 		static_cast<size_t>(resp.getDataLength())
 	};
 
-	sout << "BUZZER_PIN, HIGH" << std::endl;
-	digitalWriteFast(BUZZER_PIN, HIGH);
-	runner.run_after(5'000, []() {
-		sout << "BUZZER_PIN, LOW" << std::endl;
-		digitalWrite(BUZZER_PIN, LOW);
-	});
+	// sout << "BUZZER_PIN, HIGH" << std::endl;
+	// digitalWriteFast(BUZZER_PIN, HIGH);
+	// runner.run_after(5'000, []() {
+	// 	sout << "BUZZER_PIN, LOW" << std::endl;
+	// 	digitalWrite(BUZZER_PIN, LOW);
+	// });
 
 	switch (resp.getRemoteAddress16()) {
 	case GCS_XBEE_ADDRESS: {

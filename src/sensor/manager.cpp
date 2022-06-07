@@ -76,7 +76,8 @@ Telemetry SensorManager::read_container_telemetry() {
     if (_sim_mode == SimulationMode::Activate) {
         pressure = _sim_pressure;
     }
-    const auto altitude = pressure2altitude(pressure);
+
+    altitude = pressure2altitude(pressure);
 
     // GPS readings
     UtcTime gps_time { 0 };

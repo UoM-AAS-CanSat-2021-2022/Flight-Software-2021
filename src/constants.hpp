@@ -40,4 +40,5 @@ static constexpr long XBEE_SERIAL_BAUD = 230400;
 static constexpr long GPS_SERIAL_BAUD = 9600;
 
 // other pins
-static constexpr std::uint8_t BUZZER_PIN = 6;
+static constexpr std::uint8_t BUZZER_PIN = 20;
+static constexpr std::uint8_t RETRACT_PIN = 17;

@@ -39,7 +39,7 @@ class SensorManager {
     void setup_gps();
     void setup_bmp();
 
-    constexpr double pressure2altitude(const double pressure) {
+    double pressure2altitude(const double pressure) {
         // Adapted from readAltitude
         // Equation taken from BMP180 datasheet (page 16):
         //  http://www.adafruit.com/datasheets/BST-BMP180-DS000-09.pdf
@@ -54,6 +54,8 @@ class SensorManager {
 public:
     SensorManager();
 
+    double altitude = 0;
+    
     // runs all the setup functions for each sensor
     void setup();
     void set_sim_mode(SimulationMode);
