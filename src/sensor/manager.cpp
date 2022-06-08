@@ -1,14 +1,16 @@
 #include <cmath>
+#include <fmt/core.h>
 #include "constants.hpp"
 #include "sensor/manager.hpp"
 #include "util/sout.hpp"
 
 void SensorManager::setup_imu() {
-    icm_valid = _icm.begin_I2C();
+    icm_valid = _icm.begin_I2C(ICM_ADDR, &I2C_WIRE);
 }
 
 void SensorManager::setup_bmp() {
-    bmp_valid = _bmp.begin_I2C();
+    bmp_valid = _bmp.begin_I2C(BMP_ADDR, &I2C_WIRE);
+
     // Set up oversampling and filter initialization
     if (bmp_valid) {
         _bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
@@ -18,19 +20,38 @@ void SensorManager::setup_bmp() {
     }
 }
 
+void SensorManager::setup_vd() {
+    pinMode(VD_PIN, INPUT);
+    analogReadResolution(ANALOG_READ_BITS);
+}
+
 void SensorManager::setup() {
     setup_bmp();
     setup_imu();
+    setup_vd();
+}
+
+void SensorManager::calibrate() {
+    if (bmp_valid && _bmp.performReading()) {
+        ground_pressure = _bmp.pressure;
+    } else {
+        // default to sea level pressure
+        ground_pressure = SEALEVEL_PRESSURE_HPA;
+    }
+
+    // read the magnetometer's z axis value to get an initial value for true south
+    sensors_event_t _a, _g, _t, mag;
+    if (icm_valid) {
+        _icm.getEvent(&_a, &_g, &_t, &mag);
+    } else {
+        mag.magnetic = { 0 };
+    }
+    true_south = mag.magnetic.z;
 }
 
 Telemetry SensorManager::read_payload_telemetry() {
-    sout << "[read_payload_telemetry] enter" << std::endl;
-
-    sout << "[read_payload_telemetry] bmp_valid=" << std::boolalpha << bmp_valid << std::endl;
     // BMP readings
     const auto reading_succeeded = bmp_valid && _bmp.performReading();
-
-    sout << "[read_payload_telemetry] reading_succeeded=" << std::boolalpha << reading_succeeded << std::endl;
 
     // default to sea level pressure
     double temp { 0.0 };
@@ -39,54 +60,30 @@ Telemetry SensorManager::read_payload_telemetry() {
         temp = _bmp.temperature;
         pressure = _bmp.pressure;
     }
-    const auto altitude = pressure2altitude(pressure);
-    sout << "[read_payload_telemetry] temp=" << temp
-        << ", pressure=" << pressure
-        << ", altitude=" << altitude
-        << std::endl;
-
-    sout << "[read_payload_telemetry] icm_valid=" << std::boolalpha << icm_valid << std::endl;
-
+    const auto altitude = std::max(
+        static_cast<double>(0.0),
+        pressure2altitude(pressure) - pressure2altitude(ground_pressure)
+    );
+    
     // IMU readings
-    sensors_event_t accel;
-    sensors_event_t gyro;
-    sensors_event_t mag;
-    sensors_event_t t;
+    sensors_event_t accel, gyro, mag, _t;
     if (icm_valid) {
-        _icm.getEvent(&accel, &gyro, &t, &mag);
-        sout << "[read_payload_telemetry] after getEvent()" << std::endl;
+        _icm.getEvent(&accel, &gyro, &_t, &mag);
     } else {
         accel.acceleration = { 0 };
         gyro.gyro = { 0 };
         mag.magnetic = { 0 };
     }
 
-    sout << "[read_payload_telemetry] " 
-        << "accel.acceleration.x=" << accel.acceleration.x
-        << ", accel.acceleration.y=" << accel.acceleration.y
-        << ", accel.acceleration.z=" << accel.acceleration.z
-        << std::endl;
-
-    sout << "[read_payload_telemetry] " 
-        << "gyro.gyro.x=" << gyro.gyro.x
-        << ", gyro.gyro.y=" << gyro.gyro.y
-        << ", gyro.gyro.z=" << gyro.gyro.z
-        << std::endl;
-
-    sout << "[read_payload_telemetry] " 
-        << "mag.magnetic.x=" << mag.magnetic.x
-        << ", mag.magnetic.y=" << mag.magnetic.y
-        << ", mag.magnetic.z=" << mag.magnetic.z
-        << std::endl;
-
     // voltage maths
-    // static constexpr auto multiplier = (ADC_MAX_INPUT_V / ANALOG_READ_MAX) * ((VD_R1 + VD_R2) / VD_R2);
+    static constexpr auto multiplier = (ADC_MAX_INPUT_V / ANALOG_READ_MAX) * ((VD_R1 + VD_R2) / VD_R2);
+    const auto pin_value = analogRead(VD_PIN);
+    const auto voltage = static_cast<double>(pin_value) * multiplier;
 
-    // const auto pin_value = analogRead(VD_PIN);
-    // const auto voltage = static_cast<double>(pin_value) * multiplier;
-    constexpr double voltage = 5.02;
+    // calculate pointing error
+    const auto yaw_pointing_error = true_south - mag.magnetic.z; // THIS IS WRONG
+    // static constexpr auto yaw_pointing_error = 0;
 
-    sout << "[read_payload_telemetry] return" << std::endl;
     return {
         altitude,
         temp,
@@ -104,6 +101,6 @@ Telemetry SensorManager::read_payload_telemetry() {
         mag.magnetic.y,
         mag.magnetic.z,
 
-        0.0
+        yaw_pointing_error
     };
 }

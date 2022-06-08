@@ -41,8 +41,13 @@ class SensorManager {
     bool icm_valid;
     bool bmp_valid;
 
+    // used to calculate the pointing error
+    double true_south;
+    double ground_pressure;
+
     void setup_imu();
     void setup_bmp();
+    void setup_vd();
 
     constexpr double pressure2altitude(const double pressure) {
         // Adapted from readAltitude
@@ -59,5 +64,6 @@ class SensorManager {
 public:
     // runs all the setup functions for each sensor
     void setup();
+    void calibrate();
     Telemetry read_payload_telemetry();
 };

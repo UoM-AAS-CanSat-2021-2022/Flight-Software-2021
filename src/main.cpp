@@ -4,16 +4,17 @@
 #include <string>
 #include <string_view>
 
+// Arduino has so many conflicting names smh my head
+#include <Arduino.h>
+#include <TimeLib.h>
+#undef B1
+
 #include "constants.hpp"
 #include "runner.hpp"
 #include "sensor/manager.hpp"
 #include "telemetry/manager.hpp"
 #include "util/sout.hpp"
 #include "xbee/manager.hpp"
-
-// Arduino has so many conflicting names smh my head
-#include <Arduino.h>
-#include <TimeLib.h>
 
 XBeeManager xbee_mgr;
 SensorManager sensor_mgr {};
@@ -29,9 +30,12 @@ void setup() {
 	// setup serial connections / peripherals
 	Serial.begin(DEBUG_SERIAL_BAUD);
 	xbee_mgr.setup(XBEE_SERIAL);
-	xbee_mgr.set_panid(PAYLOAD_LINK_PANID);
 	xbee_mgr.onRx16Response(handle_response);
 	sensor_mgr.setup();
+
+	// run calibration code 1 second after boot
+	runner.run_after(1000,
+		[]() { sensor_mgr.calibrate(); });
 
 	// setup RTC as time provider
 	setSyncProvider(getTeensy3Time);
@@ -48,13 +52,8 @@ void loop() {
 // in it's own function to make setup clearer
 void add_tasks_to_runner() {
 	// run the xbee manager's loop every time
-	// runner.schedule_task(
-	// 	[]() { xbee_mgr.loop(); });
 	runner.schedule_task(
-		500,
-		[]() { 
-			sout << "hi" << std::endl;
-			telem_mgr.send_payload_telemetry(); });
+		[]() { xbee_mgr.loop(); });
 }
 
 // ngl it feels weird to have this here but I couldn't really think of a better place to put it...
@@ -65,7 +64,20 @@ time_t getTeensy3Time() {
 void handle_response(Rx16Response& resp, uintptr_t) {
 	// check the sender's address
 	if (resp.getRemoteAddress16() == CONTAINER_XBEE_ADDRESS) {
-		// request is from the container, send it the telemetry
-		telem_mgr.send_payload_telemetry();
+		switch (resp.getData()[0]) {
+			// P - poll
+			case 'P':
+				telem_mgr.send_payload_telemetry();
+				break;
+			// C - calibrate
+			case 'C':
+				sensor_mgr.calibrate();
+				break;
+			// R - reset
+			case 'R':
+				sout << "Resetting state." << std::endl;
+				// TODO: command for resetting the state
+				break;
+		}
 	}
 }
