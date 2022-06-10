@@ -22,8 +22,8 @@ SensorManager sensor_mgr {};
 TelemetryManager telem_mgr { xbee_mgr, sensor_mgr };
 CommandParser cmd_parser { telem_mgr };
 Runner runner;
-const bool tp_released = false;
-const bool parachute_released = false;
+bool tp_released = false;
+bool parachute_released = false;
 Servo SERVO_PARACHUTE;
 Servo SERVO_CONTINUOUS;
 Servo SERVO_SPOOL;
@@ -101,8 +101,8 @@ void add_tasks_to_runner() {
 				return;
 			
 			if (sensor_mgr.read_container_telemetry().altitude <= 400){
-				parachute_released==true;
-				SERVO_PARACHUTE.write(90);
+				parachute_released = true;
+				SERVO_PARACHUTE.write(0);
 			}
 		});
 
@@ -114,12 +114,13 @@ void add_tasks_to_runner() {
 				return;
 			
 			if (sensor_mgr.read_container_telemetry().altitude <= 300){
-				tp_released==true;
-				SERVO_SPOOL.write(130);
-				SERVO_CONTINUOUS.write(180);
+				tp_released = true;
+				SERVO_SPOOL.write(160);
+				SERVO_CONTINUOUS.write(-180);
 				runner.run_after(20'000, []() { SERVO_CONTINUOUS.write(88); });
 			}
 		});
+
 }
 
 // ngl it feels weird to have this here but I couldn't really think of a better place to put it...
