@@ -58,6 +58,12 @@ void setup() {
 
 	// add the tasks for the runner to do
 	add_tasks_to_runner();
+
+	// Release payload
+	SERVO_SPOOL.write(160);
+	SERVO_CONTINUOUS.write(-180);
+	delay(4000);
+	SERVO_CONTINUOUS.write(88);
 }
 
 void loop() {
@@ -93,42 +99,8 @@ void add_tasks_to_runner() {
 			telem_mgr.forward_payload_telemetry(mock_payload_relay_data);
 		});
 	
-	// Release parachute
-	runner.schedule_task(
-		1000,
-		[]() {
-			if (parachute_released==true)
-				return;
-			
-			if (sensor_mgr.read_container_telemetry().altitude <= 400){
-				parachute_released = true;
-				SERVO_PARACHUTE.write(0);
-			}
-		});
 
-	// Release payload
-	runner.schedule_task(
-		1000,
-		[]() {
-			if (tp_released==true)
-				return;
-			
-			if (sensor_mgr.read_container_telemetry().altitude <= 300){
-				tp_released = true;
-				SERVO_SPOOL.write(160);
-				SERVO_CONTINUOUS.write(-180);
-				runner.run_after(20'000, []() { SERVO_CONTINUOUS.write(88); });
-			}
-		});
 
-	// Start Buzzer
-	runner.schedule_task(
-		1000,
-		[]() {
-			if (sensor_mgr.read_container_telemetry().altitude <= 20){
-				tone(BUZZER_PIN, 1000);
-			}
-		});
 
 }
 
