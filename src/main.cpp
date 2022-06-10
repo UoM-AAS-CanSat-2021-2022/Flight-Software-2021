@@ -121,6 +121,15 @@ void add_tasks_to_runner() {
 			}
 		});
 
+	// Start Buzzer
+	runner.schedule_task(
+		1000,
+		[]() {
+			if (sensor_mgr.read_container_telemetry().altitude <= 20){
+				tone(BUZZER_PIN, 1000);
+			}
+		});
+
 }
 
 // ngl it feels weird to have this here but I couldn't really think of a better place to put it...
