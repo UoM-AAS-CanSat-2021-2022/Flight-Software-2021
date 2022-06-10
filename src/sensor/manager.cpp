@@ -65,21 +65,6 @@ void SensorManager::set_sim_pressure(std::uint32_t sim_pressure) {
     _sim_pressure = static_cast<double>(sim_pressure);
 }
 
-void SensorManager::calibrate() {
-    std::vector<float> v;
-
-    for (int i = 0; i < 100; i++) {
-        if (bmp_valid && _bmp.performReading()) {
-            v.emplace_back(_bmp.pressure);
-        }
-
-        delay(10);
-    }
-
-    auto med = util::median(v);
-    ground_altitude = pressure2altitude(med.value_or(SEALEVEL_PRESSURE_HPA));
-}
-
 Telemetry SensorManager::read_container_telemetry() {
     // BMP readings
     const auto reading_succeeded = bmp_valid && _bmp.performReading();
@@ -141,4 +126,16 @@ Telemetry SensorManager::read_container_telemetry() {
         gps_altitude,
         gps_sats,
     };
+}
+
+std::optional<double> SensorManager::altitude() {
+    if (_sim_mode == SimulationMode::Activate) {
+        return { pressure2altitude(_sim_pressure) };
+    }
+
+    if (bmp_valid && _bmp.performReading()) {
+        return { pressure2altitude(_bmp.pressure) };
+    }
+
+    return {};
 }

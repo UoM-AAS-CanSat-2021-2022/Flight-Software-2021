@@ -50,6 +50,7 @@ static constexpr std::uint8_t BUZZER_PIN = 8;
 // #define DEBUG_GPS
 // #define DEBUG_XBEE
 // #define DEBUG_VD
+#define DEBUG_COMMANDS
 
 // Servo pins
 static constexpr std::uint8_t SERVO_PARACHUTE_PIN = 3;

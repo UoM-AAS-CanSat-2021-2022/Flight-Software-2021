@@ -11,6 +11,7 @@
 #include <HardwareSerial.h>
 
 #include "command/parser.hpp"
+#include "constants.hpp"
 
 
 // sensor readings / telemetry which the sensor manager is responsible for
@@ -65,4 +66,5 @@ public:
     SimulationMode get_sim_mode() const;
     void set_sim_pressure(std::uint32_t);
     Telemetry read_container_telemetry();
+    std::optional<double> altitude();
 };

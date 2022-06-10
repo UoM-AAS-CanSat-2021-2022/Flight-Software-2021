@@ -99,7 +99,7 @@ void add_tasks_to_runner() {
 	
 	// Release parachute
 	runner.schedule_task(
-		50,
+		1000,
 		[]() {
 			if (parachute_released==true)
 				return;
