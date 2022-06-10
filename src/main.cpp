@@ -4,26 +4,31 @@
 #include <string>
 #include <string_view>
 
+#include <Arduino.h>
+#undef B1
+#include <TimeLib.h>
+#include <Servo.h>
+
 #include "command/parser.hpp"
 #include "constants.hpp"
 #include "runner.hpp"
 #include "sensor/manager.hpp"
 #include "telemetry/manager.hpp"
 #include "util/sout.hpp"
+#include "util/misc.hpp"
 #include "xbee/manager.hpp"
-
-// Arduino has so many conflicting names smh my head
-#include <Arduino.h>
-#include <TimeLib.h>
 
 XBeeManager xbee_mgr;
 SensorManager sensor_mgr {};
 TelemetryManager telem_mgr { xbee_mgr, sensor_mgr };
 CommandParser cmd_parser { telem_mgr };
 Runner runner;
-const bool tp_released = false;
+bool tp_released = false;
+bool parachute_released = false;
+Servo SERVO_PARACHUTE;
+Servo SERVO_CONTINUOUS;
+Servo SERVO_SPOOL;
 
-time_t getTeensy3Time();
 void handle_response(Rx16Response&, uintptr_t);
 void add_tasks_to_runner();
 
@@ -33,6 +38,9 @@ void setup() {
 	analogReadResolution(ANALOG_READ_BITS);
 	pinMode(BUZZER_PIN, OUTPUT);
 	pinMode(LED_BUILTIN, OUTPUT);
+	pinMode(SERVO_PARACHUTE_PIN, OUTPUT);
+	pinMode(SERVO_SPOOL_PIN, OUTPUT);
+	pinMode(SERVO_CONTINUOUS_PIN, OUTPUT);
 
 	// setup serial connections / peripherals
 	Serial.begin(DEBUG_SERIAL_BAUD);
@@ -40,9 +48,13 @@ void setup() {
 	xbee_mgr.set_panid(GCS_LINK_PANID);
 	xbee_mgr.onRx16Response(handle_response);
 	sensor_mgr.setup();
+	
+	SERVO_PARACHUTE.attach(SERVO_PARACHUTE_PIN, 1000, 2000);
+    SERVO_SPOOL.attach(SERVO_SPOOL_PIN, 1000, 2000);
+	SERVO_CONTINUOUS.attach(SERVO_CONTINUOUS_PIN, 1350, 1650);
 
 	// setup RTC as time provider
-	setSyncProvider(getTeensy3Time);
+	setSyncProvider(util::getTeensy3Time);
 
 	// add the tasks for the runner to do
 	add_tasks_to_runner();
@@ -59,6 +71,10 @@ void add_tasks_to_runner() {
 	runner.schedule_task(
 		[]() { xbee_mgr.loop(); });
 
+	runner.schedule_task(
+		500,
+		[]() { digitalToggleFast(LED_BUILTIN); });
+
 	// send the container telemetry once a second if its enabled
 	runner.schedule_task(
 		1000,
@@ -66,25 +82,59 @@ void add_tasks_to_runner() {
 
 	// send the payload telemetry four times a second if the
 	// payload is released
+	// imagine having a payload lmao
+	// runner.schedule_task(
+	// 	250,
+	// 	[]() {
+	// 		if (!tp_released)
+	// 			return;
+
+	// 		xbee_mgr.set_panid(PAYLOAD_LINK_PANID);
+	// 		// poll the container for the data, for now just mock it out
+	// 		// NOTE: eventually none of this will be needed as the handle_response method
+	// 		//       will get called for the response from the XBee
+	// 		std::string_view mock_payload_relay_data { "165.2,13.7,5.02,0.18,0.08,-0.18,0.12,0.31,9.8,0.19,-0.05,0.47,12,LANDED" };
+	// 		xbee_mgr.set_panid(GCS_LINK_PANID);
+	// 		telem_mgr.forward_payload_telemetry(mock_payload_relay_data);
+	// 	});
+	
+	// Release parachute
 	runner.schedule_task(
-		250,
+		50,
 		[]() {
-			if (!tp_released)
+			if (parachute_released==true)
 				return;
-
-			xbee_mgr.set_panid(PAYLOAD_LINK_PANID);
-			// poll the container for the data, for now just mock it out
-			// NOTE: eventually none of this will be needed as the handle_response method
-			//       will get called for the response from the XBee
-			std::string_view mock_payload_relay_data { "165.2,13.7,5.02,0.18,0.08,-0.18,0.12,0.31,9.8,0.19,-0.05,0.47,12,LANDED" };
-			xbee_mgr.set_panid(GCS_LINK_PANID);
-			telem_mgr.forward_payload_telemetry(mock_payload_relay_data);
+			
+			if (sensor_mgr.read_container_telemetry().altitude <= 400){
+				parachute_released = true;
+				SERVO_PARACHUTE.write(0);
+			}
 		});
-}
 
-// ngl it feels weird to have this here but I couldn't really think of a better place to put it...
-time_t getTeensy3Time() {
-	return Teensy3Clock.get();
+	// Release payload
+	runner.schedule_task(
+		1000,
+		[]() {
+			if (tp_released==true)
+				return;
+			
+			if (sensor_mgr.read_container_telemetry().altitude <= 300){
+				tp_released = true;
+				SERVO_SPOOL.write(160);
+				SERVO_CONTINUOUS.write(-180);
+				runner.run_after(20'000, []() { SERVO_CONTINUOUS.write(88); });
+			}
+		});
+
+	// Start Buzzer
+	runner.schedule_task(
+		1000,
+		[]() {
+			if (sensor_mgr.read_container_telemetry().altitude <= 20){
+				tone(BUZZER_PIN, 1000);
+			}
+		});
+
 }
 
 // remove the logging messages once we aren't testing any more

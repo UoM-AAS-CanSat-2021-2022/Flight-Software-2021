@@ -1,15 +1,12 @@
-#include <cmath>
-#include <fmt/core.h>
 #include "constants.hpp"
 #include "sensor/manager.hpp"
+#include "util/misc.hpp"
 #include "util/sout.hpp"
 
 SensorManager::SensorManager() :
     _gps(&GPS_SERIAL),
     _sim_mode(SimulationMode::Disable),
-    _sim_pressure(SEALEVEL_PRESSURE_PA),
-    gps_valid(false),
-    bmp_valid(false) { }
+    _sim_pressure(SEALEVEL_PRESSURE_PA) { }
 
 void SensorManager::setup_gps() {
     gps_valid = _gps.begin(GPS_SERIAL_BAUD);
@@ -31,6 +28,11 @@ void SensorManager::setup_bmp() {
         _bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
         _bmp.setOutputDataRate(BMP3_ODR_50_HZ);
     }
+}
+
+void SensorManager::setup_vd() {
+    pinMode(VD_PIN, INPUT);
+    analogReadResolution(ANALOG_READ_BITS);
 }
 
 void SensorManager::setup() {
@@ -62,6 +64,21 @@ void SensorManager::set_sim_pressure(std::uint32_t sim_pressure) {
     _sim_pressure = static_cast<double>(sim_pressure);
 }
 
+void SensorManager::calibrate() {
+    std::vector<float> v;
+
+    for (int i = 0; i < 100; i++) {
+        if (bmp_valid && _bmp.performReading()) {
+            v.emplace_back(_bmp.pressure);
+        }
+
+        delay(10);
+    }
+
+    auto med = util::median(v);
+    ground_altitude = pressure2altitude(med.value_or(SEALEVEL_PRESSURE_HPA));
+}
+
 Telemetry SensorManager::read_container_telemetry() {
     // BMP readings
     const auto reading_succeeded = bmp_valid && _bmp.performReading();
@@ -82,9 +99,7 @@ Telemetry SensorManager::read_container_telemetry() {
 
     // GPS readings
     UtcTime gps_time { 0 };
-	double gps_latitude { 0.0 };
-	double gps_longitude { 0.0 };
-	double gps_altitude { 0.0 };
+	double gps_latitude { 0.0 }, gps_longitude { 0.0 }, gps_altitude { 0.0 };
 	std::uint8_t gps_sats { 0 };
     const bool new_nmea = _gps.newNMEAreceived();
 

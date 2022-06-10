@@ -35,12 +35,16 @@ class SensorManager {
     SimulationMode _sim_mode;
     double _sim_pressure;
 
+    // corrections
+    double ground_altitude;
+
     bool gps_valid;
     bool bmp_valid;
 
-    // performs setup for the BMP sensor
+    // individual sensor setup functions
     void setup_gps();
     void setup_bmp();
+    void setup_vd();
 
     constexpr double pressure2altitude(const double pressure) {
         // Adapted from readAltitude
@@ -56,9 +60,8 @@ class SensorManager {
 
 public:
     SensorManager();
-
-    // runs all the setup functions for each sensor
     void setup();
+    void calibrate();
     void set_sim_mode(SimulationMode);
     SimulationMode get_sim_mode() const;
     void set_sim_pressure(std::uint32_t);

@@ -16,7 +16,6 @@ enum class SimulationMode {
 	Activate,
 };
 
-
 struct UtcTime {
 	std::uint8_t h;
 	std::uint8_t m;

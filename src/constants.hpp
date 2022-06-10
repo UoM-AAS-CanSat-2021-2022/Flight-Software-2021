@@ -44,9 +44,14 @@ static constexpr auto& BMP_WIRE = Wire;
 static constexpr std::uint8_t BMP_ADDR = 119;
 
 // other pins
-static constexpr std::uint8_t BUZZER_PIN = 6;
+static constexpr std::uint8_t BUZZER_PIN = 8;
 
 // debuf flags
-#define DEBUG_GPS
+// #define DEBUG_GPS
 // #define DEBUG_XBEE
-#define DEBUG_VD
+// #define DEBUG_VD
+
+// Servo pins
+static constexpr std::uint8_t SERVO_PARACHUTE_PIN = 3;
+static constexpr std::uint8_t SERVO_SPOOL_PIN = 4;
+static constexpr std::uint8_t SERVO_CONTINUOUS_PIN = 5;
