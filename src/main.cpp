@@ -34,8 +34,6 @@ void add_tasks_to_runner();
 
 void setup() {
 	// setup pins
-	pinMode(VD_PIN, INPUT);
-	analogReadResolution(ANALOG_READ_BITS);
 	pinMode(BUZZER_PIN, OUTPUT);
 	pinMode(LED_BUILTIN, OUTPUT);
 	pinMode(SERVO_PARACHUTE_PIN, OUTPUT);
@@ -71,8 +69,9 @@ void add_tasks_to_runner() {
 	runner.schedule_task(
 		[]() { xbee_mgr.loop(); });
 
+	// slow blink LED to show the cansat is on and the main loop is running
 	runner.schedule_task(
-		500,
+		1000,
 		[]() { digitalToggleFast(LED_BUILTIN); });
 
 	// send the container telemetry once a second if its enabled
@@ -166,6 +165,15 @@ struct CommandHandler {
 	void operator()(const Pressure& pressure) {
 		sout << fmt::format("[CommandHandler] Got PRESSURE value: {:.2f}", pressure) << std::endl;
 		sensor_mgr.set_sim_pressure(pressure);
+	}
+
+	void operator()(const Command& cmd) {
+		sout << fmt::format("[CommandHandler] Got Command value: {}", cmd) << std::endl;
+		// TODO: implement this with a state
+	}
+
+	void operator()(const TetheredPayloadDepth& tpd) {
+		sout << fmt::format("[CommandHandler] Got TPD value: {}", tpd) << std::endl;
 	}
 };
 

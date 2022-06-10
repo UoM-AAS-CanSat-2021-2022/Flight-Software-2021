@@ -38,6 +38,7 @@ void SensorManager::setup_vd() {
 void SensorManager::setup() {
     setup_bmp();
     setup_gps();
+    setup_vd();
 }
 
 void SensorManager::set_sim_mode(SimulationMode sim_mode) {

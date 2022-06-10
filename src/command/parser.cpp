@@ -13,6 +13,9 @@ std::optional<CommandParser::Format> CommandParser::parse_fmt(const std::string_
 	else if (s == "ST")   return Format::ST;
 	else if (s == "SIM")  return Format::SIM;
 	else if (s == "SIMP") return Format::SIMP;
+	else if (s == "RES")  return Format::RES;
+	else if (s == "CAL")  return Format::CAL;
+	else if (s == "TPD")  return Format::TPD;
 	else return {};
 }
 
@@ -118,10 +121,23 @@ Value CommandParser::parse(const std::string& input) const {
 			else if (buf == "ACTIVATE") retval = { SimulationMode::Activate };
 			else return {};
 			break;
-		case Format::SIMP:
+		case Format::SIMP: {
 			Pressure p {};
 			ec = std::from_chars(buf.data(), buf.data() + buf.size(), p).ec;
 			if (ec == std::errc()) retval = { p };
+			else return {};
+			break;
+		}
+		case Format::RES:
+			retval = { Command::Reset };
+			break;
+		case Format::CAL:
+			retval = { Command::Calibrate };
+			break;
+		case Format::TPD:
+			TetheredPayloadDepth tpd {};
+			ec = std::from_chars(buf.data(), buf.data() + buf.size(), tpd).ec;
+			if (ec == std::errc()) retval = { tpd };
 			else return {};
 			break;
 	}

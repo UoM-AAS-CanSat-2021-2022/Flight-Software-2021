@@ -23,7 +23,12 @@ struct UtcTime {
 };
 using OnOff = bool;
 using Pressure = std::uint32_t;
-using Value = std::variant<std::monostate, OnOff, UtcTime, SimulationMode, Pressure>;
+enum class Command {
+	Reset,
+	Calibrate,
+};
+using TetheredPayloadDepth = std::int32_t;
+using Value = std::variant<std::monostate, OnOff, UtcTime, SimulationMode, Pressure, Command, TetheredPayloadDepth>;
 
 class CommandParser {
 	TelemetryManager& _telem_mgr;
@@ -33,6 +38,9 @@ class CommandParser {
 		ST,
 		SIM,
 		SIMP,
+		RES,
+		CAL,
+		TPD,
 	};
 
 	std::optional<Format> parse_fmt(std::string_view const) const;
@@ -73,7 +81,20 @@ struct fmt::formatter<SimulationMode> {
 			}
 		}
 
-		return fmt::format_to(ctx.out(), "{}", (mode == SimulationMode::Activate) ? 'S' : 'F');
+		return fmt::format_to(ctx.out(), (mode == SimulationMode::Activate) ? "S" : "F");
+	}
+};
+
+
+template<>
+struct fmt::formatter<Command> {
+	constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+		return ctx.begin();
+  	}
+
+	template<typename FormatContext>
+	auto format(const Command& cmd, FormatContext& ctx) -> decltype(ctx.out()) {
+		return fmt::format_to(ctx.out(), (cmd == Command::Reset) ? "Reset" : "Calibrate");
 	}
 };
 

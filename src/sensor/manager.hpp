@@ -3,16 +3,15 @@
 #include <cstdint>
 #include <vector>
 
-#include "command/parser.hpp"
-
 #include <Arduino.h>
-
-//Sensor libraries
+#undef B1
 #include <Adafruit_BMP3XX.h>
-
-#include <HardwareSerial.h>
 #include <Adafruit_GPS.h>
 #include <Adafruit_Sensor.h>
+#include <HardwareSerial.h>
+
+#include "command/parser.hpp"
+
 
 // sensor readings / telemetry which the sensor manager is responsible for
 struct Telemetry {
