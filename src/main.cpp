@@ -91,31 +91,30 @@ time_t getTeensy3Time() {
 struct CommandHandler {
 	void operator()(const std::monostate&) {
 		// parse failed, ignore it
-		sout << "Parsing the command failed." << std::endl;
+		sout << "[CommandHandler] Parsing the command failed." << std::endl;
 	}
 
 	void operator()(const OnOff& on_off) {
-		sout << "Got ON_OFF value: " << std::boolalpha << on_off << std::endl;
+		sout << fmt::format("[CommandHandler] Got ON_OFF value: {}", on_off) << std::endl;
 		telem_mgr.set_enabled(on_off);
 	}
 
 	void operator()(const UtcTime& utc_time) {
-		const auto [h, m, s] = utc_time;
-		sout << fmt::format("Got UtcTime value: {:02}:{:02}:{:02}", h, m, s) << std::endl;
+		sout << fmt::format("[CommandHandler] Got UtcTime value: {}", utc_time) << std::endl;
 
 		// we don't care about the full date, just the hour minute and second
-		setTime(h, m, s, 0, 0, 0);
+		setTime(utc_time.h, utc_time.m, utc_time.s, 0, 0, 0);
 	}
 
 	void operator()(const SimulationMode& mode) {
-		sout << "Got MODE value: " << mode << std::endl;
+		sout << fmt::format("[CommandHandler] Got MODE value: {:?}", mode) << std::endl;
 
 		sensor_mgr.set_sim_mode(mode);
-		sout << "sim_mode=" << sensor_mgr.get_sim_mode() << std::endl;
+		sout << fmt::format("[CommandHandler] sim_mode={:?}", sensor_mgr.get_sim_mode()) << std::endl;
 	}
 
 	void operator()(const Pressure& pressure) {
-		sout << "Got PRESSURE value: " << pressure << std::endl;
+		sout << fmt::format("[CommandHandler] Got PRESSURE value: {:.2f}", pressure) << std::endl;
 		sensor_mgr.set_sim_pressure(pressure);
 	}
 };

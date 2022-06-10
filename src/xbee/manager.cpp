@@ -62,6 +62,9 @@ std::uint8_t XBeeManager::set_panid(std::uint16_t panid, std::uint16_t timeout) 
 }
 
 void XBeeManager::send(std::uint16_t dest_addr, std::string& msg) {
+#ifdef DEBUG_XBEE
+    sout << "[XBeeManager::send] msg=\"" << msg << "\"" << std::endl;
+#endif
     static Tx16Request req;
     req.setAddress16(dest_addr);
     auto data_ptr = reinterpret_cast<std::uint8_t*>(msg.data());

@@ -6,38 +6,6 @@
 #include "command/parser.hpp"
 #include "telemetry/manager.hpp"
 
-std::ostream& operator<<(std::ostream& os, const SimulationMode& mode) {
-	switch (mode) {
-		case SimulationMode::Enable:
-			os << "Enable";
-			break;
-		case SimulationMode::Disable:
-			os << "Disable";
-			break;
-		case SimulationMode::Activate:
-			os << "Activate";
-			break;
-	}
-	return os;
-}
-
-// template<>
-// struct fmt::formatter<SimulationMode> {
-// 	template<typename ParseContext>
-// 	constexpr auto parse(ParseContext& ctx) {
-// 		return ctx.begin();
-// 	}
-// 
-// 	template<typename FormatContext>
-// 	auto format(SimulationMode const& mode, FormatContext& ctx) {
-// 		if (mode == SimulationMode::Activate) {
-// 			return fmt::format_to(ctx.out(), "S");
-// 		} else {
-// 			return fmt::format_to(ctx.out(), "F");
-// 		}
-// 	}
-// };
-
 CommandParser::CommandParser(TelemetryManager& telem_mgr) : _telem_mgr(telem_mgr) {}
 
 std::optional<CommandParser::Format> CommandParser::parse_fmt(const std::string_view s) const {

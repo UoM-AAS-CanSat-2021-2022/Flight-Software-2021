@@ -29,9 +29,8 @@ static constexpr std::uint32_t ANALOG_READ_BITS = 12;
 static constexpr std::uint32_t ANALOG_READ_MAX = (1 << ANALOG_READ_BITS) - 1;
 static constexpr std::uint8_t VD_PIN = 23;
 static constexpr double ADC_MAX_INPUT_V = 3.3;
-static constexpr double VD_INPUT_V = 5.0;
-static constexpr double VD_R1 = 5'000.0; // 120'000.0
-static constexpr double VD_R2 = 10'000.0; // 820'000.0
+static constexpr double VD_R1 = 680'000.0;
+static constexpr double VD_R2 = 1'000'000.0;
 
 // Serial interfaces and baud rates
 static auto& XBEE_SERIAL = Serial1;
@@ -41,8 +40,13 @@ static constexpr long XBEE_SERIAL_BAUD = 230400;
 static constexpr long GPS_SERIAL_BAUD = 9600;
 
 // I2C interfaces and addresses
-static constexpr auto& BMP_WIRE = Wire1;
+static constexpr auto& BMP_WIRE = Wire;
 static constexpr std::uint8_t BMP_ADDR = 119;
 
 // other pins
 static constexpr std::uint8_t BUZZER_PIN = 6;
+
+// debuf flags
+#define DEBUG_GPS
+// #define DEBUG_XBEE
+#define DEBUG_VD

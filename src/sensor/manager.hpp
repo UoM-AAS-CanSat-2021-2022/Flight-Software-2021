@@ -35,6 +35,9 @@ class SensorManager {
     SimulationMode _sim_mode;
     double _sim_pressure;
 
+    bool gps_valid;
+    bool bmp_valid;
+
     // performs setup for the BMP sensor
     void setup_gps();
     void setup_bmp();

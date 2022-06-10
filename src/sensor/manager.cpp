@@ -1,4 +1,5 @@
 #include <cmath>
+#include <fmt/core.h>
 #include "constants.hpp"
 #include "sensor/manager.hpp"
 #include "util/sout.hpp"
@@ -6,10 +7,12 @@
 SensorManager::SensorManager() :
     _gps(&GPS_SERIAL),
     _sim_mode(SimulationMode::Disable),
-    _sim_pressure(SEALEVEL_PRESSURE_PA) { }
+    _sim_pressure(SEALEVEL_PRESSURE_PA),
+    gps_valid(false),
+    bmp_valid(false) { }
 
 void SensorManager::setup_gps() {
-    _gps.begin(GPS_SERIAL_BAUD);
+    gps_valid = _gps.begin(GPS_SERIAL_BAUD);
 
     // Initialization.
     _gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ); 
@@ -19,16 +22,15 @@ void SensorManager::setup_gps() {
 }
 
 void SensorManager::setup_bmp() {
-    if (!_bmp.begin_I2C(BMP_ADDR, &BMP_WIRE)) {
-        sout << "[BMP] Could not find a valid BMP3 sensor, check wiring!" << std::endl;
-        while (true);
-    }
+    bmp_valid = _bmp.begin_I2C();
 
     // Set up oversampling and filter initialization
-    _bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
-    _bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
-    _bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
-    _bmp.setOutputDataRate(BMP3_ODR_50_HZ);
+    if (bmp_valid) {
+        _bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
+        _bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
+        _bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
+        _bmp.setOutputDataRate(BMP3_ODR_50_HZ);
+    }
 }
 
 void SensorManager::setup() {
@@ -62,7 +64,7 @@ void SensorManager::set_sim_pressure(std::uint32_t sim_pressure) {
 
 Telemetry SensorManager::read_container_telemetry() {
     // BMP readings
-    const auto reading_succeeded = _bmp.performReading();
+    const auto reading_succeeded = bmp_valid && _bmp.performReading();
 
     // default to sea level pressure
     double temp { 0.0 };
@@ -84,8 +86,13 @@ Telemetry SensorManager::read_container_telemetry() {
 	double gps_longitude { 0.0 };
 	double gps_altitude { 0.0 };
 	std::uint8_t gps_sats { 0 };
+    const bool new_nmea = _gps.newNMEAreceived();
 
-    if (_gps.newNMEAreceived() && _gps.fix) {
+#ifdef DEBUG_GPS
+    sout << fmt::format("[read_container_telemetry] gps_valid={}, new_nmea={}, _gps.fix={}", gps_valid, new_nmea, _gps.fix) << std::endl;
+#endif
+
+    if (gps_valid && new_nmea && _gps.fix) {
         _gps.parse(_gps.lastNMEA());
 
         gps_time.h = _gps.hour;
@@ -95,9 +102,12 @@ Telemetry SensorManager::read_container_telemetry() {
         gps_longitude = _gps.longitude;
         gps_altitude = _gps.altitude;
         gps_sats = _gps.satellites;
-    } else {
-        sout << "[_gps] No data received" << std::endl;
     }
+
+#ifdef DEBUG_GPS
+    sout << fmt::format("[read_container_telemetry] gps_time=\"{:02}:{:02}:{:02}\", gps_latitude={:.4f}, gps_longitude={:.4f}, gps_altitude={:.2f}, gps_sats={}",
+            gps_time.h, gps_time.m, gps_time.s, gps_latitude, gps_longitude, gps_altitude, gps_sats) << std::endl;
+#endif
 
     // voltage maths
     static constexpr auto multiplier = (ADC_MAX_INPUT_V / ANALOG_READ_MAX) * ((VD_R1 + VD_R2) / VD_R2);
