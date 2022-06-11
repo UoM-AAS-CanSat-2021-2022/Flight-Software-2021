@@ -15,7 +15,8 @@ std::optional<CommandParser::Format> CommandParser::parse_fmt(const std::string_
 	else if (s == "SIMP") return Format::SIMP;
 	else if (s == "RES")  return Format::RES;
 	else if (s == "CAL")  return Format::CAL;
-	else if (s == "TPD")  return Format::TPD;
+	else if (s == "TPR")  return Format::TPR;
+	else if (s == "RP2")  return Format::RP2;
 	else return {};
 }
 
@@ -134,11 +135,11 @@ Value CommandParser::parse(const std::string& input) const {
 		case Format::CAL:
 			retval = { Command::Calibrate };
 			break;
-		case Format::TPD:
-			TetheredPayloadDepth tpd {};
-			ec = std::from_chars(buf.data(), buf.data() + buf.size(), tpd).ec;
-			if (ec == std::errc()) retval = { tpd };
-			else return {};
+		case Format::TPR:
+			retval = { Command::ReleaseTetheredPayload };
+			break;
+		case Format::RP2:
+			retval = { Command::ReleaseParachute2 };
 			break;
 	}
 

@@ -23,6 +23,7 @@ SensorManager sensor_mgr {};
 TelemetryManager telem_mgr { xbee_mgr, sensor_mgr };
 CommandParser cmd_parser { telem_mgr };
 Runner runner;
+bool release_payload = false;
 bool tp_released = false;
 bool parachute_released = false;
 Servo SERVO_PARACHUTE;
@@ -98,42 +99,57 @@ void add_tasks_to_runner() {
 	// 	});
 	
 	// Release parachute
-	runner.schedule_task(
-		1000,
-		[]() {
-			if (parachute_released==true)
-				return;
-			
-			if (sensor_mgr.read_container_telemetry().altitude <= 400){
-				parachute_released = true;
-				SERVO_PARACHUTE.write(0);
-			}
-		});
+	// runner.schedule_task(
+	// 	1000,
+	// 	[]() {
+	// 		if (parachute_released==true)
+	// 			return;
+	// 		
+	// 		if (sensor_mgr.read_container_telemetry().altitude <= 400){
+	// 			parachute_released = true;
+	// 			SERVO_PARACHUTE.write(0);
+	// 		}
+	// 	});
 
 	// Release payload
+	// runner.schedule_task(
+	// 	1000,
+	// 	[]() {
+	// 		if (tp_released == true)
+	// 			return;
+	// 		
+	// 		if (sensor_mgr.read_container_telemetry().altitude <= 300){
+	// 			tp_released = true;
+	// 			SERVO_SPOOL.write(160);
+	// 			SERVO_CONTINUOUS.write(-180);
+	// 			runner.run_after(20'000, []() { SERVO_CONTINUOUS.write(88); });
+	// 		}
+	// 	});
+
+	// release the payload 2m on command
 	runner.schedule_task(
-		1000,
+		100,
 		[]() {
-			if (tp_released==true)
+			if (tp_released || !release_payload)
 				return;
 			
-			if (sensor_mgr.read_container_telemetry().altitude <= 300){
+			if (release_payload) {
 				tp_released = true;
-				SERVO_SPOOL.write(160);
+				SERVO_SPOOL.write(0);
 				SERVO_CONTINUOUS.write(-180);
-				runner.run_after(20'000, []() { SERVO_CONTINUOUS.write(88); });
+				runner.run_after(4'000, []() { SERVO_CONTINUOUS.write(88); });
+	// 			tone(BUZZER_PIN, 1000);
 			}
 		});
 
 	// Start Buzzer
-	runner.schedule_task(
-		1000,
-		[]() {
-			if (sensor_mgr.read_container_telemetry().altitude <= 20){
-				tone(BUZZER_PIN, 1000);
-			}
-		});
-
+	// runner.schedule_task(
+	// 	1000,
+	// 	[]() {
+	// 		if (sensor_mgr.read_container_telemetry().altitude <= 20){
+	// 			tone(BUZZER_PIN, 1000);
+	// 		}
+	// 	});
 }
 
 // remove the logging messages once we aren't testing any more
@@ -152,8 +168,10 @@ struct CommandHandler {
 		sout << fmt::format("[CommandHandler] Got UtcTime value: {}", utc_time) << std::endl;
 
 		// we don't care about the full date, just the hour minute and second
-		setTime(utc_time.h, utc_time.m, utc_time.s, 0, 0, 0);
-	}
+		auto [h, m, s] = utc_time;
+		setTime(h, m, s, 0, 0, 0);
+		rtc_set(now());
+	} 
 
 	void operator()(const SimulationMode& mode) {
 		sout << fmt::format("[CommandHandler] Got MODE value: {:?}", mode) << std::endl;
@@ -170,10 +188,6 @@ struct CommandHandler {
 	void operator()(const Command& cmd) {
 		sout << fmt::format("[CommandHandler] Got Command value: {}", cmd) << std::endl;
 		// TODO: implement this with a state
-	}
-
-	void operator()(const TetheredPayloadDepth& tpd) {
-		sout << fmt::format("[CommandHandler] Got TPD value: {}", tpd) << std::endl;
 	}
 };
 

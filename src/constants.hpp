@@ -44,7 +44,7 @@ static constexpr auto& BMP_WIRE = Wire;
 static constexpr std::uint8_t BMP_ADDR = 119;
 
 // other pins
-static constexpr std::uint8_t BUZZER_PIN = 8;
+static constexpr std::uint8_t BUZZER_PIN = 6;
 
 // debuf flags
 // #define DEBUG_GPS
@@ -53,6 +53,9 @@ static constexpr std::uint8_t BUZZER_PIN = 8;
 #define DEBUG_COMMANDS
 
 // Servo pins
-static constexpr std::uint8_t SERVO_PARACHUTE_PIN = 3;
-static constexpr std::uint8_t SERVO_SPOOL_PIN = 4;
-static constexpr std::uint8_t SERVO_CONTINUOUS_PIN = 5;
+static constexpr std::uint8_t SERVO_SPOOL_PIN = 3;
+static constexpr std::uint8_t SERVO_CONTINUOUS_PIN = 4;
+static constexpr std::uint8_t SERVO_PARACHUTE_PIN = 5;
+
+// calibration settings
+static constexpr auto CALIB_WINDOW_SIZE = 100;

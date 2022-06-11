@@ -1,8 +1,8 @@
 #pragma once
 
 #include <deque>
-#include <queue>
-#include "sensor/manager.hpp"
+#include <optional>
+#include "command/parser.hpp"
 
 
 class StateMachine {
@@ -25,19 +25,17 @@ class StateMachine {
         Landed,
     };
 
-    SensorManager& _sensor_mgr;
     std::deque<double> altitude_window;
 
     State _state;
-    bool telemetry_enable;
-    SimulationMode sim_mode;
-    Pressure sim_pressure;
-    TetheredPayloadDepth tp_depth;
+    bool _telemetry_enable;
+    SimulationMode _sim_mode;
+    Pressure _sim_pressure;
 
 public:
-    StateMachine(SensorManager&);
+    StateMachine();
     State get_state() const;
-    void transition();
+    void step_state(std::optional<double>);
     void reset();
     void save_to_eeprom() const;
     bool telemetry_enabled() const;
@@ -49,5 +47,4 @@ public:
 	void operator()(const SimulationMode&);
 	void operator()(const Pressure&);
 	void operator()(const Command&);
-	void operator()(const TetheredPayloadDepth&);
 };

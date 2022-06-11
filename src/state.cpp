@@ -1,21 +1,31 @@
 #include <fmt/core.h>
+#include <vector>
+
+#include "constants.hpp"
 #include "state.hpp"
 #include "util/sout.hpp"
 
-StateMachine::StateMachine(SensorManager& sensor_mgr) : _sensor_mgr(sensor_mgr), _state(State::LaunchWait) {}
+StateMachine::StateMachine() :
+    _state(State::LaunchWait),
+    _sim_mode(SimulationMode::Disable) {}
 
 StateMachine::State StateMachine::get_state() const {
     return _state;
 }
 
-void StateMachine::transition() {
-    static std::vector<float> alts;
+void StateMachine::step_state(std::optional<double> altitude) {
+    // maintain altitude window of roughly last 5 seconds - 512 data points
+    altitude_window.push_back(altitude.value_or(0.0));
+    if (altitude_window.size() > 512) {
+        altitude_window.pop_front();
+    }
 
+    static std::uint8_t calib_count;
     switch (_state) {
         case State::Calibrating: {
-            if (alts.size() < 100) {
-                alts.emplace_back(_sensor_mgr.altitude().value_or(0.0));
-            } else {
+            // count up to 100 (>= because I wizardry happens sometimes)
+            if (++calib_count >= CALIB_WINDOW_SIZE) {
+                 
             }
             break;
         }
@@ -45,7 +55,7 @@ void StateMachine::operator()(const OnOff& on_off) {
 #ifdef DEBUG_COMMANDS
     sout << fmt::format("[CommandHandler] Got ON_OFF value: {}", on_off) << std::endl;
 #endif
-    telemetry_enable = on_off;
+    _telemetry_enable = on_off;
     // telem_mgr.set_enabled(on_off);
 }
 
@@ -53,4 +63,3 @@ void StateMachine::operator()(const UtcTime&) {}
 void StateMachine::operator()(const SimulationMode&) {}
 void StateMachine::operator()(const Pressure&) {}
 void StateMachine::operator()(const Command&) {}
-void StateMachine::operator()(const TetheredPayloadDepth&) {}

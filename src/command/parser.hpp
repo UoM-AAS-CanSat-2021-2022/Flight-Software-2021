@@ -26,9 +26,10 @@ using Pressure = std::uint32_t;
 enum class Command {
 	Reset,
 	Calibrate,
+	ReleaseTetheredPayload,
+	ReleaseParachute2,
 };
-using TetheredPayloadDepth = std::int32_t;
-using Value = std::variant<std::monostate, OnOff, UtcTime, SimulationMode, Pressure, Command, TetheredPayloadDepth>;
+using Value = std::variant<std::monostate, OnOff, UtcTime, SimulationMode, Pressure, Command>;
 
 class CommandParser {
 	TelemetryManager& _telem_mgr;
@@ -40,7 +41,8 @@ class CommandParser {
 		SIMP,
 		RES,
 		CAL,
-		TPD,
+		TPR,
+		RP2,
 	};
 
 	std::optional<Format> parse_fmt(std::string_view const) const;
@@ -94,7 +96,17 @@ struct fmt::formatter<Command> {
 
 	template<typename FormatContext>
 	auto format(const Command& cmd, FormatContext& ctx) -> decltype(ctx.out()) {
-		return fmt::format_to(ctx.out(), (cmd == Command::Reset) ? "Reset" : "Calibrate");
+		switch (cmd) {
+			case Command::Calibrate:
+				return fmt::format_to(ctx.out(), "Calibrate");
+			case Command::Reset:
+				return fmt::format_to(ctx.out(), "Reset");
+			case Command::ReleaseTetheredPayload:
+				return fmt::format_to(ctx.out(), "ReleaseTetheredPayload");
+			case Command::ReleaseParachute2:
+				return fmt::format_to(ctx.out(), "ReleaseParachute2");
+		}
+		return ctx.out();
 	}
 };
 
